@@ -44,7 +44,7 @@ export default function OperatorPage() {
   const [transcript, setTranscript] = useState('');
   const [result, setResult] = useState<IncidentResult | null>(null);
   const [error, setError] = useState('');
-  const [history, setHistory] = useState<{ id: number; summary: string; severity: string; created_at: string }[]>([]);
+  const [history, setHistory] = useState<{ id: number; summary: string; severity: string; status: string; resolution_note?: string; created_at: string }[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [inputMode, setInputMode] = useState<InputMode>('voice');
@@ -66,10 +66,12 @@ export default function OperatorPage() {
     const res = await fetch('/api/incidents?limit=5');
     if (res.ok) {
       const data = await res.json();
-      setHistory(data.incidents.map((i: { id: number; ai_analysis: string; severity: string; created_at: string }) => ({
+      setHistory(data.incidents.map((i: { id: number; ai_analysis: string; severity: string; status: string; resolution_note?: string; created_at: string }) => ({
         id: i.id,
         summary: (() => { try { return JSON.parse(i.ai_analysis).summary; } catch { return 'Incident recorded'; } })(),
         severity: i.severity,
+        status: i.status,
+        resolution_note: i.resolution_note,
         created_at: i.created_at,
       })));
     }
@@ -219,20 +221,37 @@ export default function OperatorPage() {
             <p className="text-sm text-gray-400">No incidents reported yet.</p>
           ) : (
             <div className="space-y-2">
-              {history.map(h => (
-                <div key={h.id} className="flex items-start gap-3 p-2 rounded-lg bg-gray-50">
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{
-                    backgroundColor: SEVERITY_CONFIG[h.severity as keyof typeof SEVERITY_CONFIG]?.bg || '#f3f4f6',
-                    color: SEVERITY_CONFIG[h.severity as keyof typeof SEVERITY_CONFIG]?.color || '#555',
-                  }}>
-                    {h.severity.toUpperCase()}
-                  </span>
-                  <div>
+              {history.map(h => {
+                const STATUS_STYLE: Record<string, { label: string; color: string; bg: string }> = {
+                  open:        { label: 'Open',        color: '#f59e0b', bg: '#fffbeb' },
+                  in_progress: { label: 'In Progress', color: '#3b82f6', bg: '#eff6ff' },
+                  resolved:    { label: 'Resolved',    color: '#22c55e', bg: '#f0fdf4' },
+                };
+                const stc = STATUS_STYLE[h.status] || { label: h.status, color: '#888', bg: '#f3f4f6' };
+                return (
+                  <div key={h.id} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{
+                        backgroundColor: SEVERITY_CONFIG[h.severity as keyof typeof SEVERITY_CONFIG]?.bg || '#f3f4f6',
+                        color: SEVERITY_CONFIG[h.severity as keyof typeof SEVERITY_CONFIG]?.color || '#555',
+                      }}>
+                        {h.severity.toUpperCase()}
+                      </span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: stc.bg, color: stc.color }}>
+                        {stc.label}
+                      </span>
+                    </div>
                     <p className="text-sm text-gray-700">{h.summary}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{new Date(h.created_at).toLocaleString()}</p>
+                    {h.resolution_note && (
+                      <p className="text-xs text-green-700 mt-1 bg-green-50 rounded-lg px-2 py-1">
+                        ✓ {h.resolution_note}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1">{new Date(h.created_at).toLocaleString()}</p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

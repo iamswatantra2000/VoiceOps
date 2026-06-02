@@ -61,6 +61,19 @@ function initSchema(db: Database.Database) {
     );
   `);
 
+  // Migrate: add resolution columns if they don't exist yet (safe to run every boot)
+  const incidentCols = db.pragma('table_info(incidents)') as { name: string }[];
+  const colNames = incidentCols.map(c => c.name);
+  if (!colNames.includes('resolution_note')) {
+    db.exec(`ALTER TABLE incidents ADD COLUMN resolution_note TEXT`);
+  }
+  if (!colNames.includes('resolved_by')) {
+    db.exec(`ALTER TABLE incidents ADD COLUMN resolved_by INTEGER REFERENCES users(id)`);
+  }
+  if (!colNames.includes('resolved_at')) {
+    db.exec(`ALTER TABLE incidents ADD COLUMN resolved_at DATETIME`);
+  }
+
   // Seed default admin and a demo operator if not exist
   const adminExists = db.prepare('SELECT id FROM users WHERE employee_id = ?').get('ADMIN001');
   if (!adminExists) {

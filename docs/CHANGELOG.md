@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-06-02 — F02: Incident Status Workflow
+
+### Added
+- `PATCH /api/incidents` — advance status (open → in_progress → resolved), forward-only
+- `resolution_note`, `resolved_by`, `resolved_at` columns added to `incidents` via safe boot migration
+- Admin incidents page: 3-step visual stepper (Open → In Progress → Resolved) in detail panel
+- "Mark In Progress" button when status = open
+- Resolution note textarea + "Mark Resolved" button when status = in_progress
+- Resolved panel shows note, resolver name, and timestamp
+- Status + severity dual filter pills on the incidents list
+- Operator history drawer: status pill per incident + resolution note shown inline
+
+### Files changed
+- `lib/db.ts`, `app/api/incidents/route.ts`
+- `app/admin/incidents/page.tsx`, `app/operator/page.tsx`
+- `docs/features/F02-incident-status-workflow.md`
+
+---
+
 ## 2026-06-02 — F01: Manual Text Fallback
 
 ### Added
