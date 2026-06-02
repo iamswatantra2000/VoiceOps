@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-06-02 — F01: Manual Text Fallback
+
+### Added
+- Voice / Type toggle pills on the operator idle screen
+- Text mode: large textarea, character count hint (min 10 chars), Submit button
+- Both modes feed into the exact same `submitIncident()` → AI analysis pipeline
+- `switchMode()` resets error and typed text on toggle
+- `reset()` now also clears `typedText` state
+
+### Files changed
+- `app/operator/page.tsx`
+- `docs/features/F01-manual-text-fallback.md`
+
+---
+
+
 ## 2026-06-02 — Initial Build
 
 ### Added

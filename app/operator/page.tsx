@@ -35,6 +35,7 @@ const SEVERITY_CONFIG = {
 };
 
 type Phase = 'idle' | 'recording' | 'processing' | 'result';
+type InputMode = 'voice' | 'text';
 
 export default function OperatorPage() {
   const router = useRouter();
@@ -46,6 +47,8 @@ export default function OperatorPage() {
   const [history, setHistory] = useState<{ id: number; summary: string; severity: string; created_at: string }[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [inputMode, setInputMode] = useState<InputMode>('voice');
+  const [typedText, setTypedText] = useState('');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
@@ -159,6 +162,20 @@ export default function OperatorPage() {
     setTranscript('');
     setResult(null);
     setError('');
+    setTypedText('');
+  }
+
+  function switchMode(mode: InputMode) {
+    setInputMode(mode);
+    setError('');
+    setTypedText('');
+  }
+
+  function handleTextSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const text = typedText.trim();
+    if (text.length < 10) return;
+    submitIncident(text);
   }
 
   async function logout() {
@@ -224,32 +241,94 @@ export default function OperatorPage() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center p-6 max-w-lg mx-auto w-full">
 
-        {/* IDLE STATE — Big record button */}
+        {/* IDLE STATE */}
         {phase === 'idle' && (
-          <div className="text-center fade-in-up">
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Report an Incident</h1>
-            <p className="text-gray-500 mb-10">Tap the button and describe what you see or heard.</p>
+          <div className="w-full fade-in-up">
+            <h1 className="text-2xl font-bold text-gray-800 mb-1 text-center">Report an Incident</h1>
+            <p className="text-gray-500 mb-6 text-center text-sm">Describe what happened, the machine or area, and any safety concerns.</p>
 
-            <button
-              onClick={startRecording}
-              className="w-52 h-52 rounded-full text-white font-bold text-xl shadow-2xl transition-all active:scale-95 hover:scale-105 flex flex-col items-center justify-center gap-3 mx-auto"
-              style={{ backgroundColor: '#003057' }}
-            >
-              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-              </svg>
-              <span>TAP TO SPEAK</span>
-            </button>
+            {/* Mode toggle pills */}
+            <div className="flex justify-center mb-8">
+              <div className="flex bg-gray-200 rounded-full p-1 gap-1">
+                <button
+                  onClick={() => switchMode('voice')}
+                  className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all"
+                  style={inputMode === 'voice'
+                    ? { backgroundColor: '#003057', color: 'white' }
+                    : { backgroundColor: 'transparent', color: '#555' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                  </svg>
+                  Voice
+                </button>
+                <button
+                  onClick={() => switchMode('text')}
+                  className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all"
+                  style={inputMode === 'text'
+                    ? { backgroundColor: '#003057', color: 'white' }
+                    : { backgroundColor: 'transparent', color: '#555' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                  </svg>
+                  Type
+                </button>
+              </div>
+            </div>
 
-            {error && (
-              <div className="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                {error}
+            {/* VOICE MODE */}
+            {inputMode === 'voice' && (
+              <div className="text-center">
+                <button
+                  onClick={startRecording}
+                  className="w-52 h-52 rounded-full text-white font-bold text-xl shadow-2xl transition-all active:scale-95 hover:scale-105 flex flex-col items-center justify-center gap-3 mx-auto"
+                  style={{ backgroundColor: '#003057' }}
+                >
+                  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                  </svg>
+                  <span>TAP TO SPEAK</span>
+                </button>
+                <p className="mt-6 text-xs text-gray-400">Works best in Chrome or Edge. Microphone access required.</p>
               </div>
             )}
 
-            <p className="mt-8 text-xs text-gray-400">
-              Speak clearly about what happened, what machine or area, and any safety concerns.
-            </p>
+            {/* TEXT MODE */}
+            {inputMode === 'text' && (
+              <form onSubmit={handleTextSubmit} className="space-y-4">
+                <textarea
+                  value={typedText}
+                  onChange={e => setTypedText(e.target.value)}
+                  placeholder="Describe the incident here... e.g. 'Machine 4 on assembly line A is making a loud grinding noise and has stopped moving. There is a burning smell coming from the motor area.'"
+                  rows={6}
+                  className="w-full px-4 py-4 rounded-2xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-base leading-relaxed resize-none shadow-sm"
+                  style={{ fontSize: '16px' }}
+                  autoFocus
+                />
+                <div className="flex items-center justify-between px-1">
+                  <span className={`text-xs font-medium ${typedText.trim().length < 10 ? 'text-gray-400' : 'text-green-600'}`}>
+                    {typedText.trim().length < 10
+                      ? `${10 - typedText.trim().length} more characters needed`
+                      : `${typedText.trim().length} characters — ready to submit`}
+                  </span>
+                </div>
+                <button
+                  type="submit"
+                  disabled={typedText.trim().length < 10}
+                  className="w-full py-4 rounded-2xl font-bold text-white text-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
+                  style={{ backgroundColor: '#003057' }}
+                >
+                  Submit Incident
+                </button>
+              </form>
+            )}
+
+            {error && (
+              <div className="mt-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                {error}
+              </div>
+            )}
           </div>
         )}
 
