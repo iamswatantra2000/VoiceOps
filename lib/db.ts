@@ -1,30 +1,25 @@
-import { neon, NeonQueryFunction } from '@neondatabase/serverless';
+import postgres from 'postgres';
 
-let _sql: NeonQueryFunction<false, false> | null = null;
+let _sql: ReturnType<typeof postgres> | null = null;
 
-export function getSql(): NeonQueryFunction<false, false> {
+export function getSql(): ReturnType<typeof postgres> {
   if (!_sql) {
     if (!process.env.DATABASE_URL) {
       throw new Error('DATABASE_URL environment variable is not set');
     }
-    _sql = neon(process.env.DATABASE_URL);
+    _sql = postgres(process.env.DATABASE_URL, {
+      ssl: 'require',
+      max: 1,
+      idle_timeout: 20,
+      connect_timeout: 10,
+    });
   }
   return _sql;
 }
 
-// Convenience proxy — use `sql` just like before
-export const sql: NeonQueryFunction<false, false> = new Proxy({} as NeonQueryFunction<false, false>, {
-  apply(_target, _thisArg, args) {
-    return getSql()(...(args as Parameters<NeonQueryFunction<false, false>>));
-  },
-  get(_target, prop) {
-    const s = getSql();
-    return (s as unknown as Record<string | symbol, unknown>)[prop];
-  },
-});
-
 export async function initSchema() {
   const q = getSql();
+
   await q`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -33,7 +28,7 @@ export async function initSchema() {
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'operator',
       department TEXT,
-      created_at TIMESTAMP DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
 
@@ -50,9 +45,9 @@ export async function initSchema() {
       machine TEXT,
       resolution_note TEXT,
       resolved_by INTEGER REFERENCES users(id),
-      resolved_at TIMESTAMP,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
+      resolved_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
 
@@ -64,7 +59,7 @@ export async function initSchema() {
       extracted_text TEXT,
       category TEXT,
       uploaded_by INTEGER REFERENCES users(id),
-      created_at TIMESTAMP DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
 
@@ -74,12 +69,13 @@ export async function initSchema() {
       incident_id INTEGER NOT NULL REFERENCES incidents(id),
       helpful INTEGER DEFAULT 0,
       comment TEXT,
-      created_at TIMESTAMP DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
 }
 
 export async function seedUsers() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const bcrypt = require('bcryptjs');
   const q = getSql();
 

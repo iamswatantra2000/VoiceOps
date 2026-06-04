@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { sql } from '@/lib/db';
+import { getSql } from '@/lib/db';
 import path from 'path';
 import fs from 'fs';
 
@@ -10,6 +10,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
+  const sql = getSql();
   const docs = await sql`SELECT id, original_name, category, created_at FROM documents ORDER BY created_at DESC`;
   return NextResponse.json({ documents: docs });
 }
@@ -22,19 +23,17 @@ export async function POST(req: NextRequest) {
 
   const formData = await req.formData();
   const file = formData.get('file') as File;
-  const category = formData.get('category') as string || 'General';
+  const category = (formData.get('category') as string) || 'General';
 
-  if (!file) {
-    return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-  }
+  if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const filename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
 
-  // On Vercel we can't write to disk — store text in DB only
   let extractedText = '';
   try {
     if (file.name.toLowerCase().endsWith('.pdf')) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const pdfParse = require('pdf-parse');
       const data = await pdfParse(buffer);
       extractedText = data.text;
@@ -45,15 +44,14 @@ export async function POST(req: NextRequest) {
     console.error('Text extraction failed:', err);
   }
 
-  // Also write to local disk when running locally (best-effort)
+  // Save to local disk when running locally (best-effort, silently skipped on Vercel)
   try {
     const uploadsDir = path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
     fs.writeFileSync(path.join(uploadsDir, filename), buffer);
-  } catch {
-    // silently skip on Vercel read-only filesystem
-  }
+  } catch { /* ignore on Vercel read-only filesystem */ }
 
+  const sql = getSql();
   const rows = await sql`
     INSERT INTO documents (filename, original_name, extracted_text, category, uploaded_by)
     VALUES (${filename}, ${file.name}, ${extractedText}, ${category}, ${user.id})
@@ -70,12 +68,12 @@ export async function DELETE(req: NextRequest) {
   }
 
   const { id } = await req.json();
-
+  const sql = getSql();
   const docs = await sql`SELECT filename FROM documents WHERE id = ${id}`;
+
   if (docs[0]) {
-    // Try to remove local file (best-effort)
     try {
-      const filepath = path.join(process.cwd(), 'uploads', docs[0].filename);
+      const filepath = path.join(process.cwd(), 'uploads', docs[0].filename as string);
       if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
     } catch { /* ignore on Vercel */ }
     await sql`DELETE FROM documents WHERE id = ${id}`;

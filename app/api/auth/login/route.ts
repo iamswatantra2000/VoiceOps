@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { sql } from '@/lib/db';
+import { getSql } from '@/lib/db';
 import { signToken, UserPayload } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Employee ID and password required' }, { status: 400 });
   }
 
+  const sql = getSql();
   const rows = await sql`SELECT * FROM users WHERE employee_id = ${employee_id.trim().toUpperCase()}`;
   const user = rows[0] as { id: number; name: string; employee_id: string; password_hash: string; role: string; department: string } | undefined;
 
@@ -26,7 +27,6 @@ export async function POST(req: NextRequest) {
   };
 
   const token = signToken(payload);
-
   const response = NextResponse.json({ user: payload, success: true });
   response.cookies.set('voiceops_token', token, {
     httpOnly: true,

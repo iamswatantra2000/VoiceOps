@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { initSchema, seedUsers } from '@/lib/db';
 
-// One-time setup endpoint — run once after deploy to create tables and seed users
-// Visit: /api/init
+// One-time setup — visit /api/init once after first deploy to create tables and seed users
 export async function GET() {
   try {
     await initSchema();

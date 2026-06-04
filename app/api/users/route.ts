@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { getCurrentUser } from '@/lib/auth';
-import { sql } from '@/lib/db';
+import { getSql } from '@/lib/db';
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -9,6 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
+  const sql = getSql();
   const users = await sql`SELECT id, name, employee_id, role, department, created_at FROM users ORDER BY created_at DESC`;
   return NextResponse.json({ users });
 }
@@ -20,11 +21,11 @@ export async function POST(req: NextRequest) {
   }
 
   const { name, employee_id, password, role, department } = await req.json();
-
   if (!name || !employee_id || !password || !role) {
     return NextResponse.json({ error: 'Name, Employee ID, password, and role are required' }, { status: 400 });
   }
 
+  const sql = getSql();
   const existing = await sql`SELECT id FROM users WHERE employee_id = ${employee_id.trim().toUpperCase()}`;
   if (existing.length > 0) {
     return NextResponse.json({ error: 'Employee ID already exists' }, { status: 409 });
@@ -47,11 +48,11 @@ export async function DELETE(req: NextRequest) {
   }
 
   const { id } = await req.json();
-
   if (id === user.id) {
     return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
   }
 
+  const sql = getSql();
   await sql`DELETE FROM users WHERE id = ${id}`;
   return NextResponse.json({ success: true });
 }

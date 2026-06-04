@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { sql } from '@/lib/db';
+import { getSql } from '@/lib/db';
 import { analyzeIncident } from '@/lib/ai';
 
 export async function POST(req: NextRequest) {
@@ -13,10 +13,11 @@ export async function POST(req: NextRequest) {
   }
 
   const analysis = await analyzeIncident(transcript, user.department, shift, machine);
+  const sql = getSql();
 
   const rows = await sql`
     INSERT INTO incidents (user_id, voice_transcript, ai_analysis, severity, status, department, shift, machine)
-    VALUES (${user.id}, ${transcript}, ${JSON.stringify(analysis)}, ${analysis.severity}, 'open', ${user.department}, ${shift || null}, ${machine || null})
+    VALUES (${user.id}, ${transcript}, ${JSON.stringify(analysis)}, ${analysis.severity}, 'open', ${user.department}, ${shift ?? null}, ${machine ?? null})
     RETURNING id
   `;
 
@@ -29,11 +30,12 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const limit = parseInt(url.searchParams.get('limit') || '20');
+  const sql = getSql();
 
   let incidents;
   if (user.role === 'admin') {
     incidents = await sql`
-      SELECT i.*, u.name as operator_name, u.employee_id, u.department,
+      SELECT i.*, u.name as operator_name, u.employee_id as operator_employee_id, u.department as operator_department,
              r.name as resolver_name
       FROM incidents i
       JOIN users u ON i.user_id = u.id
@@ -57,24 +59,24 @@ export async function PATCH(req: NextRequest) {
   }
 
   const { id, status, resolution_note } = await req.json();
-
   const validStatuses = ['open', 'in_progress', 'resolved'];
   if (!id || !validStatuses.includes(status)) {
     return NextResponse.json({ error: 'Valid incident id and status required' }, { status: 400 });
   }
 
+  const sql = getSql();
   const existing = await sql`SELECT id, status FROM incidents WHERE id = ${id}`;
   if (!existing[0]) return NextResponse.json({ error: 'Incident not found' }, { status: 404 });
 
   const order = ['open', 'in_progress', 'resolved'];
-  if (order.indexOf(status) <= order.indexOf(existing[0].status)) {
+  if (order.indexOf(status) <= order.indexOf(existing[0].status as string)) {
     return NextResponse.json({ error: 'Cannot move status backwards' }, { status: 400 });
   }
 
   if (status === 'resolved') {
     await sql`
       UPDATE incidents
-      SET status = ${status}, resolution_note = ${resolution_note || null},
+      SET status = ${status}, resolution_note = ${resolution_note ?? null},
           resolved_by = ${user.id}, resolved_at = NOW(), updated_at = NOW()
       WHERE id = ${id}
     `;
@@ -83,8 +85,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const updated = await sql`
-    SELECT i.*, u.name as operator_name, u.employee_id,
-           r.name as resolver_name
+    SELECT i.*, u.name as operator_name, r.name as resolver_name
     FROM incidents i
     JOIN users u ON i.user_id = u.id
     LEFT JOIN users r ON i.resolved_by = r.id

@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { sql } from './db';
+import { getSql } from './db';
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -16,15 +16,12 @@ export interface IncidentAnalysis {
 }
 
 export async function analyzeIncident(transcript: string, department?: string, shift?: string, machine?: string): Promise<IncidentAnalysis> {
-  // Fetch relevant document excerpts from the knowledge base
-  const docs = await sql`SELECT original_name, extracted_text, category FROM documents LIMIT 10` as {
-    original_name: string;
-    extracted_text: string;
-    category: string;
-  }[];
+  const sql = getSql();
+
+  const docs = await sql`SELECT original_name, extracted_text, category FROM documents LIMIT 10`;
 
   const knowledgeBase = docs.length > 0
-    ? docs.map(d => `[${d.original_name} - ${d.category}]\n${d.extracted_text?.slice(0, 2000)}`).join('\n\n---\n\n')
+    ? docs.map(d => `[${d.original_name} - ${d.category}]\n${String(d.extracted_text ?? '').slice(0, 2000)}`).join('\n\n---\n\n')
     : 'No documents uploaded yet. Providing general manufacturing incident guidance.';
 
   const systemPrompt = `You are VoiceOps, an AI incident handler for Scania's production line operators.
@@ -75,7 +72,6 @@ Severity guide:
     if (!jsonMatch) throw new Error('No JSON in response');
     return JSON.parse(jsonMatch[0]) as IncidentAnalysis;
   } catch {
-    // Fallback if parsing fails
     return {
       summary: 'Incident recorded and being processed.',
       severity: 'medium',
