@@ -28,7 +28,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
-      if (!d.user || d.user.role !== 'admin') { router.push('/'); return; }
+      if (!d.user || d.user.role !== 'admin') { router.push('/login'); return; }
       setUser(d.user);
     });
     loadData();
@@ -58,7 +58,7 @@ export default function AdminDashboard() {
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/');
+    router.push('/login');
   }
 
   const SEVERITY_COLORS: Record<string, string> = {

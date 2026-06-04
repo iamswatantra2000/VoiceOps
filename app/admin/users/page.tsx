@@ -37,7 +37,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
-      if (!d.user || d.user.role !== 'admin') { router.push('/'); return; }
+      if (!d.user || d.user.role !== 'admin') { router.push('/login'); return; }
       setCurrentUserId(d.user.id);
     });
     loadUsers();

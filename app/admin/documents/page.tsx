@@ -25,7 +25,7 @@ export default function DocumentsPage() {
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
-      if (!d.user || d.user.role !== 'admin') { router.push('/'); return; }
+      if (!d.user || d.user.role !== 'admin') { router.push('/login'); return; }
     });
     loadDocs();
   }, [router]);

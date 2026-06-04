@@ -72,7 +72,7 @@ export default function OperatorPage() {
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
-      if (!d.user) { router.push('/'); return; }
+      if (!d.user) { router.push('/login'); return; }
       setUser(d.user);
     });
     loadHistory();
@@ -200,7 +200,7 @@ export default function OperatorPage() {
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/');
+    router.push('/login');
   }
 
   const severityConfig = result ? SEVERITY_CONFIG[result.analysis.severity] : null;
