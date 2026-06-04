@@ -85,11 +85,7 @@ export default function HomePage() {
           <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-none mb-6">
             <span style={{ color: '#003057' }}>Incidents reported</span>
             <br />
-            <span style={{
-              background: 'linear-gradient(90deg, #E07B39, #f59e0b)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}>in one tap.</span>
+            <span style={{ color: '#E07B39' }}>in one tap.</span>
           </h1>
 
           <p className="text-xl text-gray-500 leading-relaxed max-w-2xl mx-auto mb-10">
@@ -260,7 +256,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: '#E07B39' }}>How it works</p>
-            <h2 className="text-4xl md:text-5xl font-black" style={{ color: '#003057' }}>Three steps.<br />Under 30 seconds.</h2>
+            <h2 className="text-4xl md:text-5xl font-black" style={{ color: '#0f172a' }}>Three steps.<br />Under 30 seconds.</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -299,8 +295,8 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: '#E07B39' }}>Features</p>
-            <h2 className="text-4xl md:text-5xl font-black text-white">Built for the factory floor.</h2>
-            <p className="text-blue-300 mt-4 text-lg max-w-xl mx-auto">Loud environments. PPE. Non-technical workers. Time pressure. VoiceOps is built for all of it.</p>
+            <h2 className="text-4xl md:text-5xl font-black" style={{ color: '#ffffff' }}>Built for the factory floor.</h2>
+            <p className="mt-4 text-lg max-w-xl mx-auto" style={{ color: '#93c5fd' }}>Loud environments. PPE. Non-technical workers. Time pressure. VoiceOps is built for all of it.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -312,10 +308,11 @@ export default function HomePage() {
               { icon: '🔄', title: 'Status Workflow', desc: 'Open → In Progress → Resolved. Full lifecycle tracking per incident.' },
               { icon: '🌅', title: 'Shift & Machine Tags', desc: 'Auto-detects shift time. Tag the machine. Spot patterns fast.' },
             ].map((f, i) => (
-              <div key={i} className="rounded-2xl p-6 bg-white bg-opacity-5 border border-white border-opacity-10 hover:bg-opacity-10 transition-all group">
+              <div key={i} className="rounded-2xl p-6 border hover:scale-105 transition-all"
+                style={{ backgroundColor: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.12)' }}>
                 <span className="text-3xl mb-4 block">{f.icon}</span>
-                <h3 className="text-white font-bold mb-2">{f.title}</h3>
-                <p className="text-blue-300 text-sm leading-relaxed">{f.desc}</p>
+                <h3 className="font-bold mb-2" style={{ color: '#ffffff' }}>{f.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#93c5fd' }}>{f.desc}</p>
               </div>
             ))}
           </div>
@@ -327,8 +324,8 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: '#E07B39' }}>For teams</p>
-            <h2 className="text-4xl md:text-5xl font-black" style={{ color: '#003057' }}>Two apps.<br />One system.</h2>
-            <p className="text-gray-500 mt-4 text-lg">Everyone sees exactly what they need — nothing more, nothing less.</p>
+            <h2 className="text-4xl md:text-5xl font-black" style={{ color: '#0f172a' }}>Two apps.<br />One system.</h2>
+            <p className="mt-4 text-lg" style={{ color: '#64748b' }}>Everyone sees exactly what they need — nothing more, nothing less.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -410,10 +407,10 @@ export default function HomePage() {
         }} />
         <div className="max-w-2xl mx-auto text-center relative">
           <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#E07B39' }}>Get started now</p>
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-5">
+          <h2 className="text-4xl md:text-5xl font-black mb-5" style={{ color: '#ffffff' }}>
             Ready to see it<br />in action?
           </h2>
-          <p className="text-blue-300 text-lg mb-10 leading-relaxed">
+          <p className="text-lg mb-10 leading-relaxed" style={{ color: '#93c5fd' }}>
             Log in as a demo operator and report your first incident in under 30 seconds. No setup needed.
           </p>
           <Link href="/login"
