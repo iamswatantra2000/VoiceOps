@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { getDb } from './db';
+import { sql } from './db';
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -16,10 +16,8 @@ export interface IncidentAnalysis {
 }
 
 export async function analyzeIncident(transcript: string, department?: string, shift?: string, machine?: string): Promise<IncidentAnalysis> {
-  const db = getDb();
-
   // Fetch relevant document excerpts from the knowledge base
-  const docs = db.prepare('SELECT original_name, extracted_text, category FROM documents LIMIT 10').all() as {
+  const docs = await sql`SELECT original_name, extracted_text, category FROM documents LIMIT 10` as {
     original_name: string;
     extracted_text: string;
     category: string;

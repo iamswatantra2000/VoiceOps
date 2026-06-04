@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getDb } from '@/lib/db';
+import { sql } from '@/lib/db';
 import { analyzeIncident } from '@/lib/ai';
 
 export async function POST(req: NextRequest) {
@@ -14,40 +14,37 @@ export async function POST(req: NextRequest) {
 
   const analysis = await analyzeIncident(transcript, user.department, shift, machine);
 
-  const db = getDb();
-  const result = db.prepare(`
+  const rows = await sql`
     INSERT INTO incidents (user_id, voice_transcript, ai_analysis, severity, status, department, shift, machine)
-    VALUES (?, ?, ?, ?, 'open', ?, ?, ?)
-  `).run(user.id, transcript, JSON.stringify(analysis), analysis.severity, user.department, shift || null, machine || null);
+    VALUES (${user.id}, ${transcript}, ${JSON.stringify(analysis)}, ${analysis.severity}, 'open', ${user.department}, ${shift || null}, ${machine || null})
+    RETURNING id
+  `;
 
-  return NextResponse.json({
-    id: result.lastInsertRowid,
-    transcript,
-    analysis,
-  });
+  return NextResponse.json({ id: rows[0].id, transcript, analysis });
 }
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const db = getDb();
   const url = new URL(req.url);
   const limit = parseInt(url.searchParams.get('limit') || '20');
 
   let incidents;
   if (user.role === 'admin') {
-    incidents = db.prepare(`
-      SELECT i.*, u.name as operator_name, u.employee_id, u.department
+    incidents = await sql`
+      SELECT i.*, u.name as operator_name, u.employee_id, u.department,
+             r.name as resolver_name
       FROM incidents i
       JOIN users u ON i.user_id = u.id
+      LEFT JOIN users r ON i.resolved_by = r.id
       ORDER BY i.created_at DESC
-      LIMIT ?
-    `).all(limit);
+      LIMIT ${limit}
+    `;
   } else {
-    incidents = db.prepare(`
-      SELECT * FROM incidents WHERE user_id = ? ORDER BY created_at DESC LIMIT ?
-    `).all(user.id, limit);
+    incidents = await sql`
+      SELECT * FROM incidents WHERE user_id = ${user.id} ORDER BY created_at DESC LIMIT ${limit}
+    `;
   }
 
   return NextResponse.json({ incidents });
@@ -66,40 +63,33 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Valid incident id and status required' }, { status: 400 });
   }
 
-  const db = getDb();
-  const incident = db.prepare('SELECT id, status FROM incidents WHERE id = ?').get(id) as
-    { id: number; status: string } | undefined;
+  const existing = await sql`SELECT id, status FROM incidents WHERE id = ${id}`;
+  if (!existing[0]) return NextResponse.json({ error: 'Incident not found' }, { status: 404 });
 
-  if (!incident) {
-    return NextResponse.json({ error: 'Incident not found' }, { status: 404 });
-  }
-
-  // Enforce forward-only progression: open → in_progress → resolved
   const order = ['open', 'in_progress', 'resolved'];
-  if (order.indexOf(status) <= order.indexOf(incident.status)) {
+  if (order.indexOf(status) <= order.indexOf(existing[0].status)) {
     return NextResponse.json({ error: 'Cannot move status backwards' }, { status: 400 });
   }
 
   if (status === 'resolved') {
-    db.prepare(`
+    await sql`
       UPDATE incidents
-      SET status = ?, resolution_note = ?, resolved_by = ?, resolved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(status, resolution_note || null, user.id, id);
+      SET status = ${status}, resolution_note = ${resolution_note || null},
+          resolved_by = ${user.id}, resolved_at = NOW(), updated_at = NOW()
+      WHERE id = ${id}
+    `;
   } else {
-    db.prepare(`
-      UPDATE incidents SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-    `).run(status, id);
+    await sql`UPDATE incidents SET status = ${status}, updated_at = NOW() WHERE id = ${id}`;
   }
 
-  const updated = db.prepare(`
+  const updated = await sql`
     SELECT i.*, u.name as operator_name, u.employee_id,
            r.name as resolver_name
     FROM incidents i
     JOIN users u ON i.user_id = u.id
     LEFT JOIN users r ON i.resolved_by = r.id
-    WHERE i.id = ?
-  `).get(id);
+    WHERE i.id = ${id}
+  `;
 
-  return NextResponse.json({ incident: updated });
+  return NextResponse.json({ incident: updated[0] });
 }

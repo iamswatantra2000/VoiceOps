@@ -1,100 +1,95 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import { neon, NeonQueryFunction } from '@neondatabase/serverless';
 
-const DB_PATH = path.join(process.cwd(), 'voiceops.db');
+let _sql: NeonQueryFunction<false, false> | null = null;
 
-let db: Database.Database;
-
-export function getDb(): Database.Database {
-  if (!db) {
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    initSchema(db);
+export function getSql(): NeonQueryFunction<false, false> {
+  if (!_sql) {
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL environment variable is not set');
+    }
+    _sql = neon(process.env.DATABASE_URL);
   }
-  return db;
+  return _sql;
 }
 
-function initSchema(db: Database.Database) {
-  db.exec(`
+// Convenience proxy — use `sql` just like before
+export const sql: NeonQueryFunction<false, false> = new Proxy({} as NeonQueryFunction<false, false>, {
+  apply(_target, _thisArg, args) {
+    return getSql()(...(args as Parameters<NeonQueryFunction<false, false>>));
+  },
+  get(_target, prop) {
+    const s = getSql();
+    return (s as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});
+
+export async function initSchema() {
+  const q = getSql();
+  await q`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       employee_id TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'operator',
       department TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
 
+  await q`
     CREATE TABLE IF NOT EXISTS incidents (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id),
       voice_transcript TEXT NOT NULL,
       ai_analysis TEXT,
       severity TEXT DEFAULT 'medium',
       status TEXT DEFAULT 'open',
       department TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
+      shift TEXT,
+      machine TEXT,
+      resolution_note TEXT,
+      resolved_by INTEGER REFERENCES users(id),
+      resolved_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
 
+  await q`
     CREATE TABLE IF NOT EXISTS documents (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       filename TEXT NOT NULL,
       original_name TEXT NOT NULL,
       extracted_text TEXT,
       category TEXT,
-      uploaded_by INTEGER,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (uploaded_by) REFERENCES users(id)
-    );
+      uploaded_by INTEGER REFERENCES users(id),
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
 
+  await q`
     CREATE TABLE IF NOT EXISTS incident_feedback (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      incident_id INTEGER NOT NULL,
+      id SERIAL PRIMARY KEY,
+      incident_id INTEGER NOT NULL REFERENCES incidents(id),
       helpful INTEGER DEFAULT 0,
       comment TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (incident_id) REFERENCES incidents(id)
-    );
-  `);
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
+}
 
-  // Migrate: add resolution columns if they don't exist yet (safe to run every boot)
-  const incidentCols = db.pragma('table_info(incidents)') as { name: string }[];
-  const colNames = incidentCols.map(c => c.name);
-  if (!colNames.includes('resolution_note')) {
-    db.exec(`ALTER TABLE incidents ADD COLUMN resolution_note TEXT`);
-  }
-  if (!colNames.includes('resolved_by')) {
-    db.exec(`ALTER TABLE incidents ADD COLUMN resolved_by INTEGER REFERENCES users(id)`);
-  }
-  if (!colNames.includes('resolved_at')) {
-    db.exec(`ALTER TABLE incidents ADD COLUMN resolved_at DATETIME`);
-  }
-  if (!colNames.includes('shift')) {
-    db.exec(`ALTER TABLE incidents ADD COLUMN shift TEXT`);
-  }
-  if (!colNames.includes('machine')) {
-    db.exec(`ALTER TABLE incidents ADD COLUMN machine TEXT`);
-  }
+export async function seedUsers() {
+  const bcrypt = require('bcryptjs');
+  const q = getSql();
 
-  // Seed default admin and a demo operator if not exist
-  const adminExists = db.prepare('SELECT id FROM users WHERE employee_id = ?').get('ADMIN001');
-  if (!adminExists) {
-    const bcrypt = require('bcryptjs');
-    const adminHash = bcrypt.hashSync('admin123', 10);
-    const operatorHash = bcrypt.hashSync('operator123', 10);
+  const existing = await q`SELECT id FROM users WHERE employee_id = 'ADMIN001'`;
+  if (existing.length > 0) return;
 
-    db.prepare(`INSERT INTO users (name, employee_id, password_hash, role, department) VALUES (?, ?, ?, ?, ?)`).run(
-      'Plant Admin', 'ADMIN001', adminHash, 'admin', 'Management'
-    );
-    db.prepare(`INSERT INTO users (name, employee_id, password_hash, role, department) VALUES (?, ?, ?, ?, ?)`).run(
-      'Erik Johansson', 'OP001', operatorHash, 'operator', 'Assembly Line A'
-    );
-    db.prepare(`INSERT INTO users (name, employee_id, password_hash, role, department) VALUES (?, ?, ?, ?, ?)`).run(
-      'Anna Lindqvist', 'OP002', operatorHash, 'operator', 'Welding Station B'
-    );
-  }
+  const adminHash = bcrypt.hashSync('admin123', 10);
+  const operatorHash = bcrypt.hashSync('operator123', 10);
+
+  await q`INSERT INTO users (name, employee_id, password_hash, role, department) VALUES ('Plant Admin', 'ADMIN001', ${adminHash}, 'admin', 'Management')`;
+  await q`INSERT INTO users (name, employee_id, password_hash, role, department) VALUES ('Erik Johansson', 'OP001', ${operatorHash}, 'operator', 'Assembly Line A')`;
+  await q`INSERT INTO users (name, employee_id, password_hash, role, department) VALUES ('Anna Lindqvist', 'OP002', ${operatorHash}, 'operator', 'Welding Station B')`;
 }

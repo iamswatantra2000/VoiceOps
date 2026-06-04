@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { getDb } from '@/lib/db';
+import { sql } from '@/lib/db';
 import { signToken, UserPayload } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
@@ -10,10 +10,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Employee ID and password required' }, { status: 400 });
   }
 
-  const db = getDb();
-  const user = db.prepare('SELECT * FROM users WHERE employee_id = ?').get(employee_id) as {
-    id: number; name: string; employee_id: string; password_hash: string; role: string; department: string;
-  } | undefined;
+  const rows = await sql`SELECT * FROM users WHERE employee_id = ${employee_id.trim().toUpperCase()}`;
+  const user = rows[0] as { id: number; name: string; employee_id: string; password_hash: string; role: string; department: string } | undefined;
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
@@ -34,7 +32,7 @@ export async function POST(req: NextRequest) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 8, // 8 hours
+    maxAge: 60 * 60 * 8,
   });
 
   return response;
