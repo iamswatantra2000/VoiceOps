@@ -15,7 +15,7 @@ export interface IncidentAnalysis {
   safetyWarnings: string[];
 }
 
-export async function analyzeIncident(transcript: string, department?: string): Promise<IncidentAnalysis> {
+export async function analyzeIncident(transcript: string, department?: string, shift?: string, machine?: string): Promise<IncidentAnalysis> {
   const db = getDb();
 
   // Fetch relevant document excerpts from the knowledge base
@@ -64,7 +64,7 @@ Severity guide:
     messages: [
       {
         role: 'user',
-        content: `Department: ${department || 'Unknown'}\n\nOperator reported: "${transcript}"`,
+        content: `Department: ${department || 'Unknown'}\nShift: ${shift || 'Unknown'}\nMachine / Station: ${machine || 'Not specified'}\n\nOperator reported: "${transcript}"`,
       },
     ],
   });

@@ -36,6 +36,20 @@ const SEVERITY_CONFIG = {
 
 type Phase = 'idle' | 'recording' | 'processing' | 'result';
 type InputMode = 'voice' | 'text';
+type Shift = 'Morning' | 'Afternoon' | 'Night';
+
+function getAutoShift(): Shift {
+  const h = new Date().getHours();
+  if (h >= 6 && h < 14) return 'Morning';
+  if (h >= 14 && h < 22) return 'Afternoon';
+  return 'Night';
+}
+
+const SHIFT_CONFIG: Record<Shift, { icon: string; color: string; bg: string; border: string }> = {
+  Morning:   { icon: '🌅', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
+  Afternoon: { icon: '☀️',  color: '#0369a1', bg: '#eff6ff', border: '#bae6fd' },
+  Night:     { icon: '🌙', color: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe' },
+};
 
 export default function OperatorPage() {
   const router = useRouter();
@@ -49,6 +63,8 @@ export default function OperatorPage() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [inputMode, setInputMode] = useState<InputMode>('voice');
   const [typedText, setTypedText] = useState('');
+  const [shift, setShift] = useState<Shift>(getAutoShift());
+  const [machine, setMachine] = useState('');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
@@ -144,7 +160,7 @@ export default function OperatorPage() {
     const res = await fetch('/api/incidents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript: text }),
+      body: JSON.stringify({ transcript: text, shift, machine: machine.trim() || undefined }),
     });
 
     if (!res.ok) {
@@ -165,6 +181,8 @@ export default function OperatorPage() {
     setResult(null);
     setError('');
     setTypedText('');
+    setMachine('');
+    setShift(getAutoShift());
   }
 
   function switchMode(mode: InputMode) {
@@ -265,6 +283,47 @@ export default function OperatorPage() {
           <div className="w-full fade-in-up">
             <h1 className="text-2xl font-bold text-gray-800 mb-1 text-center">Report an Incident</h1>
             <p className="text-gray-500 mb-6 text-center text-sm">Describe what happened, the machine or area, and any safety concerns.</p>
+
+            {/* Shift & Machine selectors */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6 space-y-4 shadow-sm">
+
+              {/* Shift picker */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Shift</p>
+                <div className="flex gap-2">
+                  {(['Morning', 'Afternoon', 'Night'] as Shift[]).map(s => {
+                    const cfg = SHIFT_CONFIG[s];
+                    const active = shift === s;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => setShift(s)}
+                        className="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all"
+                        style={{
+                          backgroundColor: active ? cfg.bg : 'white',
+                          borderColor: active ? cfg.border : '#e5e7eb',
+                          color: active ? cfg.color : '#9ca3af',
+                        }}
+                      >
+                        {cfg.icon} {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Machine input */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Machine / Station <span className="font-normal normal-case text-gray-400">(optional)</span></p>
+                <input
+                  type="text"
+                  value={machine}
+                  onChange={e => setMachine(e.target.value)}
+                  placeholder="e.g. M-14, Conveyor Belt 3, Welding Bay A"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-sm"
+                />
+              </div>
+            </div>
 
             {/* Mode toggle pills */}
             <div className="flex justify-center mb-8">
@@ -388,8 +447,13 @@ export default function OperatorPage() {
             <h2 className="text-xl font-bold text-gray-700">Analyzing Incident...</h2>
             <p className="text-gray-400 mt-2 text-sm">AI is checking knowledge base and generating response.</p>
             {transcript && (
-              <div className="mt-6 bg-white rounded-2xl p-4 border border-gray-200 text-left max-w-sm mx-auto">
-                <p className="text-xs text-gray-400 mb-1 font-medium">YOUR REPORT</p>
+              <div className="mt-6 bg-white rounded-2xl p-4 border border-gray-200 text-left max-w-sm mx-auto space-y-2">
+                <div className="flex gap-3 text-xs">
+                  <span className="font-semibold text-gray-500">Shift:</span>
+                  <span className="text-gray-700">{SHIFT_CONFIG[shift].icon} {shift}</span>
+                  {machine && <><span className="font-semibold text-gray-500">Machine:</span><span className="text-gray-700">{machine}</span></>}
+                </div>
+                <p className="text-xs text-gray-400 font-medium">YOUR REPORT</p>
                 <p className="text-gray-600 text-sm italic">&quot;{transcript}&quot;</p>
               </div>
             )}
@@ -457,8 +521,18 @@ export default function OperatorPage() {
             </div>
 
             {/* Transcript */}
-            <div className="rounded-2xl p-4 bg-gray-50 border border-gray-200">
-              <p className="text-xs text-gray-400 font-medium mb-1">YOUR REPORT (ID: #{result.id})</p>
+            <div className="rounded-2xl p-4 bg-gray-50 border border-gray-200 space-y-2">
+              <div className="flex flex-wrap gap-3 text-xs">
+                <span className="px-2 py-1 rounded-full font-medium" style={{ backgroundColor: SHIFT_CONFIG[shift].bg, color: SHIFT_CONFIG[shift].color }}>
+                  {SHIFT_CONFIG[shift].icon} {shift} Shift
+                </span>
+                {machine && (
+                  <span className="px-2 py-1 rounded-full bg-gray-200 text-gray-600 font-medium">
+                    🔧 {machine}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 font-medium">YOUR REPORT (ID: #{result.id})</p>
               <p className="text-sm text-gray-500 italic">&quot;{result.transcript}&quot;</p>
             </div>
 

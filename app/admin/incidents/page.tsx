@@ -17,6 +17,8 @@ interface Incident {
   resolution_note?: string;
   resolver_name?: string;
   resolved_at?: string;
+  shift?: string;
+  machine?: string;
 }
 
 interface ParsedAnalysis {
@@ -85,13 +87,16 @@ export default function IncidentsPage() {
 
   const statusFilters = ['all', 'open', 'in_progress', 'resolved'];
   const severityFilters = ['critical', 'high', 'medium', 'low'];
+  const shiftFilters = ['all', 'Morning', 'Afternoon', 'Night'];
 
   const [statusFilter, setStatusFilter] = useState('all');
+  const [shiftFilter, setShiftFilter] = useState('all');
 
   const filtered = incidents.filter(i => {
     const matchSeverity = filter === 'all' || i.severity === filter;
     const matchStatus = statusFilter === 'all' || i.status === statusFilter;
-    return matchSeverity && matchStatus;
+    const matchShift = shiftFilter === 'all' || i.shift === shiftFilter;
+    return matchSeverity && matchStatus && matchShift;
   });
 
   return (
@@ -123,6 +128,21 @@ export default function IncidentsPage() {
                   border: '1px solid #e5e7eb',
                 }}>
                 {f === 'all' ? 'All Severity' : f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Shift filters */}
+          <div className="flex gap-2 mb-2 flex-wrap">
+            {shiftFilters.map(f => (
+              <button key={f} onClick={() => setShiftFilter(f)}
+                className="px-3 py-1.5 rounded-full text-sm font-medium transition"
+                style={{
+                  backgroundColor: shiftFilter === f ? '#4f46e5' : 'white',
+                  color: shiftFilter === f ? 'white' : '#555',
+                  border: '1px solid #e5e7eb',
+                }}>
+                {f === 'Morning' ? '🌅' : f === 'Afternoon' ? '☀️' : f === 'Night' ? '🌙' : ''} {f === 'all' ? 'All Shifts' : f}
               </button>
             ))}
           </div>
@@ -168,7 +188,11 @@ export default function IncidentsPage() {
                       <p className="text-xs text-gray-400 mt-1">
                         {inc.operator_name} ({inc.employee_id}) · {inc.department}
                       </p>
-                      <p className="text-xs text-gray-400">{new Date(inc.created_at).toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(inc.created_at).toLocaleString()}
+                        {inc.shift && <> · {inc.shift === 'Morning' ? '🌅' : inc.shift === 'Afternoon' ? '☀️' : '🌙'} {inc.shift}</>}
+                        {inc.machine && <> · 🔧 {inc.machine}</>}
+                      </p>
                     </div>
                     <span className="text-xs px-2 py-1 rounded-full font-medium flex-shrink-0"
                       style={{ backgroundColor: stc.bg, color: stc.color }}>
@@ -252,6 +276,8 @@ export default function IncidentsPage() {
                   <p><strong>Operator:</strong> {selected.operator_name} ({selected.employee_id})</p>
                   <p><strong>Department:</strong> {selected.department}</p>
                   <p><strong>Reported:</strong> {new Date(selected.created_at).toLocaleString()}</p>
+                  {selected.shift && <p><strong>Shift:</strong> {selected.shift === 'Morning' ? '🌅' : selected.shift === 'Afternoon' ? '☀️' : '🌙'} {selected.shift}</p>}
+                  {selected.machine && <p><strong>Machine / Station:</strong> 🔧 {selected.machine}</p>}
                   {analysis && <p><strong>Escalate to:</strong> {analysis.escalateTo}</p>}
                 </div>
 

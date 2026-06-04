@@ -73,6 +73,12 @@ function initSchema(db: Database.Database) {
   if (!colNames.includes('resolved_at')) {
     db.exec(`ALTER TABLE incidents ADD COLUMN resolved_at DATETIME`);
   }
+  if (!colNames.includes('shift')) {
+    db.exec(`ALTER TABLE incidents ADD COLUMN shift TEXT`);
+  }
+  if (!colNames.includes('machine')) {
+    db.exec(`ALTER TABLE incidents ADD COLUMN machine TEXT`);
+  }
 
   // Seed default admin and a demo operator if not exist
   const adminExists = db.prepare('SELECT id FROM users WHERE employee_id = ?').get('ADMIN001');

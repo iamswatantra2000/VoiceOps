@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-06-02 — F03: Shift & Machine Tag
+
+### Added
+- `shift` and `machine` columns in `incidents` table via safe boot migration
+- Operator screen: shift picker (Morning 🌅 / Afternoon ☀️ / Night 🌙) auto-selects based on current time
+- Operator screen: optional Machine/Station text input above voice/type toggle
+- Both fields passed to AI for richer context in analysis
+- Processing state and result card show selected shift + machine as pills
+- Admin incidents list: shift + machine shown inline on each card
+- Admin incidents detail panel: shift + machine in meta section
+- Admin filter row: filter incidents by shift (All / Morning / Afternoon / Night)
+
+### Files changed
+- `lib/db.ts`, `lib/ai.ts`, `app/api/incidents/route.ts`
+- `app/operator/page.tsx`, `app/admin/incidents/page.tsx`
+- `docs/features/F03-shift-machine-tag.md`
+
+---
+
 ## 2026-06-02 — F02: Incident Status Workflow
 
 ### Added

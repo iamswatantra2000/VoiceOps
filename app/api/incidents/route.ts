@@ -7,18 +7,18 @@ export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { transcript } = await req.json();
+  const { transcript, shift, machine } = await req.json();
   if (!transcript?.trim()) {
     return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
   }
 
-  const analysis = await analyzeIncident(transcript, user.department);
+  const analysis = await analyzeIncident(transcript, user.department, shift, machine);
 
   const db = getDb();
   const result = db.prepare(`
-    INSERT INTO incidents (user_id, voice_transcript, ai_analysis, severity, status, department)
-    VALUES (?, ?, ?, ?, 'open', ?)
-  `).run(user.id, transcript, JSON.stringify(analysis), analysis.severity, user.department);
+    INSERT INTO incidents (user_id, voice_transcript, ai_analysis, severity, status, department, shift, machine)
+    VALUES (?, ?, ?, ?, 'open', ?, ?, ?)
+  `).run(user.id, transcript, JSON.stringify(analysis), analysis.severity, user.department, shift || null, machine || null);
 
   return NextResponse.json({
     id: result.lastInsertRowid,
