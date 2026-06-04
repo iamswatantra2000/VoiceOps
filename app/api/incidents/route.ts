@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getSql } from '@/lib/db';
 import { analyzeIncident } from '@/lib/ai';
+import { sendIncidentAlert } from '@/lib/alerts';
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -21,7 +22,22 @@ export async function POST(req: NextRequest) {
     RETURNING id
   `;
 
-  return NextResponse.json({ id: rows[0].id, transcript, analysis });
+  const incidentId = rows[0].id;
+
+  // Fire alert for high/critical — non-blocking, won't delay the response
+  if (analysis.severity === 'critical' || analysis.severity === 'high') {
+    sendIncidentAlert({
+      incidentId,
+      transcript,
+      analysis,
+      operatorName: user.name,
+      department: user.department,
+      shift,
+      machine,
+    }).catch(console.error);
+  }
+
+  return NextResponse.json({ id: incidentId, transcript, analysis });
 }
 
 export async function GET(req: NextRequest) {

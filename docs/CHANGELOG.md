@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-06-04 — F04: Critical Incident Alerts
+
+### Added
+- `lib/alerts.ts` — `sendIncidentAlert()` using Resend email API
+- Beautiful HTML email with severity badge, operator meta, transcript,
+  safety warnings, numbered action steps, and a direct admin link
+- Alerts fire automatically on `high` and `critical` incidents
+- Non-blocking — alert send runs in background, won't slow down API response
+- Gracefully skips if `RESEND_API_KEY` or `ALERT_TO_EMAILS` not set
+- New env vars: `RESEND_API_KEY`, `ALERT_FROM_EMAIL`, `ALERT_TO_EMAILS`
+
+### Files changed
+- `lib/alerts.ts` (new)
+- `app/api/incidents/route.ts`
+- `docs/features/F04-critical-alerts.md`
+
+---
+
 ## 2026-06-02 — F03: Shift & Machine Tag
 
 ### Added
