@@ -1,7 +1,12 @@
 import { Resend } from 'resend';
 import { IncidentAnalysis } from './ai';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy — only instantiated when actually sending, not at module load / build time
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 
 interface AlertPayload {
   incidentId: number | bigint;
@@ -169,7 +174,7 @@ export async function sendIncidentAlert(payload: AlertPayload): Promise<void> {
 </html>`;
 
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from: fromEmail,
       to: recipients,
       subject,
