@@ -227,7 +227,7 @@ export default function OperatorPage() {
           <div>
             <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--vo-bg)', lineHeight: 1 }}>VoiceOps</div>
             {user && (
-              <div className="vo-caption" style={{ color: 'var(--vo-text-muted)', marginTop: '2px' }}>
+              <div className="vo-caption" style={{ color: 'rgba(245,244,242,0.55)', marginTop: '2px' }}>
                 {user.name} · {user.department}
               </div>
             )}
@@ -235,12 +235,12 @@ export default function OperatorPage() {
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowHistory(!showHistory)} className="vo-btn vo-btn--ghost"
-            style={{ height: '32px', padding: '0 12px', color: 'var(--vo-text-muted)' }}>
+            style={{ height: '32px', padding: '0 12px' }}>
             <svg className="vo-i vo-i-sm"><use href="#vo-history" /></svg>
             History
           </button>
           <button onClick={logout} className="vo-btn vo-btn--ghost"
-            style={{ height: '32px', padding: '0 12px', color: 'var(--vo-text-muted)' }}>
+            style={{ height: '32px', padding: '0 12px' }}>
             <svg className="vo-i vo-i-sm"><use href="#vo-log-out" /></svg>
             Sign Out
           </button>

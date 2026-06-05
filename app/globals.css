@@ -1,6 +1,24 @@
 @import "tailwindcss";
 @import "./voiceops-ds.css";
 
+/* ---- Baseline ---- */
+body {
+  font-family: var(--vo-font-sans);
+  background: var(--vo-bg);
+  color: var(--vo-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Dark header — ghost button override ---- */
+header .vo-btn--ghost {
+  color: rgba(245, 244, 242, 0.65);
+}
+header .vo-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(245, 244, 242, 0.95);
+}
+
 @keyframes fade-in-up {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }

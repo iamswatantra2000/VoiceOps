@@ -86,14 +86,14 @@ export default function AdminDashboard() {
           <div>
             <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--vo-bg)', lineHeight: 1 }}>VoiceOps Admin</div>
             {user && (
-              <div className="vo-caption" style={{ color: 'var(--vo-text-muted)', marginTop: '2px' }}>
+              <div className="vo-caption" style={{ color: 'rgba(245,244,242,0.55)', marginTop: '2px' }}>
                 {user.name} · Plant Management
               </div>
             )}
           </div>
         </div>
         <button onClick={logout} className="vo-btn vo-btn--ghost"
-          style={{ height: '32px', padding: '0 14px', color: 'var(--vo-text-muted)' }}>
+          style={{ height: '32px', padding: '0 14px' }}>
           <svg className="vo-i vo-i-sm"><use href="#vo-log-out" /></svg>
           Sign Out
         </button>

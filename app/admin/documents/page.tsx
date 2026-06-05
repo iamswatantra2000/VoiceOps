@@ -82,12 +82,12 @@ export default function DocumentsPage() {
     <div className="min-h-screen" style={{ background: 'var(--vo-bg)' }}>
       <header className="px-6 py-4 flex items-center gap-4"
         style={{ background: 'var(--vo-text)', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
-        <Link href="/admin" style={{ color: 'var(--vo-text-muted)', display: 'flex', alignItems: 'center' }}>
+        <Link href="/admin" style={{ color: 'rgba(245,244,242,0.65)', display: 'flex', alignItems: 'center' }}>
           <svg className="vo-i"><use href="#vo-arrow-left" /></svg>
         </Link>
         <div>
           <h1 style={{ fontWeight: 700, fontSize: '15px', color: 'var(--vo-bg)', lineHeight: 1 }}>Knowledge Base</h1>
-          <p className="vo-caption" style={{ color: 'var(--vo-text-muted)', marginTop: '2px' }}>
+          <p className="vo-caption" style={{ color: 'rgba(245,244,242,0.55)', marginTop: '2px' }}>
             Upload documents to train the AI
           </p>
         </div>
