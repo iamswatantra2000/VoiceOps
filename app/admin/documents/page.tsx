@@ -79,98 +79,127 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#F4F6F9' }}>
-      <header className="px-6 py-4 flex items-center gap-4 shadow-sm" style={{ backgroundColor: '#003057' }}>
-        <Link href="/admin" className="text-blue-300 hover:text-white transition">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-          </svg>
+    <div className="min-h-screen" style={{ background: 'var(--vo-bg)' }}>
+      <header className="px-6 py-4 flex items-center gap-4"
+        style={{ background: 'var(--vo-text)', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+        <Link href="/admin" style={{ color: 'var(--vo-text-muted)', display: 'flex', alignItems: 'center' }}>
+          <svg className="vo-i"><use href="#vo-arrow-left" /></svg>
         </Link>
         <div>
-          <h1 className="text-white font-bold">Knowledge Base</h1>
-          <p className="text-blue-300 text-xs">Upload documents to train the AI</p>
+          <h1 style={{ fontWeight: 700, fontSize: '15px', color: 'var(--vo-bg)', lineHeight: 1 }}>Knowledge Base</h1>
+          <p className="vo-caption" style={{ color: 'var(--vo-text-muted)', marginTop: '2px' }}>
+            Upload documents to train the AI
+          </p>
         </div>
       </header>
 
-      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        {/* Upload Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="font-bold text-gray-700 mb-4">Upload Document</h2>
+      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-600 mb-2">Category</label>
-            <select
-              value={category}
-              onChange={e => setCategory(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none bg-white"
-            >
+        {/* Upload Card */}
+        <div className="vo-card vo-card--pad">
+          <h2 className="vo-h3" style={{ marginBottom: '16px' }}>Upload Document</h2>
+
+          <div className="vo-field" style={{ marginBottom: '16px' }}>
+            <label className="vo-label">Category</label>
+            <select value={category} onChange={e => setCategory(e.target.value)}
+              className="vo-input" style={{ cursor: 'pointer' }}>
               {CATEGORIES.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
 
           <div
-            className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors cursor-pointer ${dragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}
+            style={{
+              border: `2px dashed ${dragOver ? 'var(--vo-accent)' : 'var(--vo-border-strong)'}`,
+              borderRadius: 'var(--vo-r-lg)',
+              padding: '40px 24px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              transition: 'border-color .14s, background .14s',
+              background: dragOver ? 'var(--vo-accent-tint)' : 'var(--vo-surface-2)',
+            }}
             onDragOver={e => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileRef.current?.click()}
           >
-            <svg className="w-10 h-10 text-gray-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            <svg className="vo-i vo-i-lg" style={{ color: dragOver ? 'var(--vo-accent)' : 'var(--vo-text-muted)', display: 'block', margin: '0 auto 12px' }}>
+              <use href="#vo-upload" />
             </svg>
-            <p className="text-gray-600 font-medium">Drag & drop or click to select</p>
-            <p className="text-gray-400 text-sm mt-1">PDF, TXT files supported</p>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".pdf,.txt"
-              className="hidden"
-              onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f); }}
-            />
+            <p className="vo-body" style={{ fontWeight: 600, marginBottom: '4px' }}>Drag & drop or click to select</p>
+            <p className="vo-caption">PDF, TXT files supported</p>
+            <input ref={fileRef} type="file" accept=".pdf,.txt" style={{ display: 'none' }}
+              onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f); }} />
           </div>
 
           {uploading && (
-            <div className="mt-4 flex items-center gap-3 text-blue-600">
-              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm">Uploading and extracting text...</span>
+            <div className="flex items-center gap-3" style={{ marginTop: '16px', color: 'var(--vo-accent)' }}>
+              <div className="spin-slow" style={{
+                width: '16px', height: '16px', flexShrink: 0, borderRadius: '50%',
+                border: '2px solid var(--vo-accent-tint-2)', borderTopColor: 'var(--vo-accent)',
+              }} />
+              <span className="vo-body-sm">Uploading and extracting text...</span>
             </div>
           )}
-          {success && <div className="mt-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm">{success}</div>}
-          {error && <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
+
+          {success && (
+            <div style={{
+              marginTop: '16px', padding: '12px 16px', borderRadius: 'var(--vo-r)',
+              background: 'var(--vo-sev-low-bg)', border: '1px solid var(--vo-sev-low-line)',
+            }}>
+              <div className="flex items-center gap-2">
+                <svg className="vo-i vo-i-sm" style={{ color: 'var(--vo-sev-low)', flexShrink: 0 }}><use href="#vo-check-circle" /></svg>
+                <p className="vo-body-sm" style={{ color: 'var(--vo-sev-low)' }}>{success}</p>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="vo-banner" style={{ marginTop: '16px' }}>
+              <svg className="vo-i vo-i-sm" style={{ flexShrink: 0 }}><use href="#vo-alert-triangle" /></svg>
+              <span className="vo-body-sm">{error}</span>
+            </div>
+          )}
         </div>
 
         {/* Documents List */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-bold text-gray-700">Uploaded Documents ({documents.length})</h2>
+        <div className="vo-card">
+          <div className="vo-card__head">
+            <p style={{ fontWeight: 700, fontSize: '15px' }}>
+              Uploaded Documents{' '}
+              <span className="vo-mono" style={{ fontSize: '13px', color: 'var(--vo-text-muted)' }}>({documents.length})</span>
+            </p>
           </div>
           {documents.length === 0 ? (
-            <p className="text-gray-400 text-sm p-6">No documents yet. Upload manuals, SOPs, or troubleshooting guides above.</p>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {documents.map(doc => (
-                <div key={doc.id} className="px-6 py-4 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#003057' + '15' }}>
-                    <svg className="w-5 h-5" style={{ color: '#003057' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{doc.original_name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{doc.category} · {new Date(doc.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <button
-                    onClick={() => deleteDoc(doc.id, doc.original_name)}
-                    className="text-red-400 hover:text-red-600 transition p-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
+            <div style={{ padding: '24px' }}>
+              <p className="vo-body-sm" style={{ color: 'var(--vo-text-muted)' }}>
+                No documents yet. Upload manuals, SOPs, or troubleshooting guides above.
+              </p>
             </div>
-          )}
+          ) : documents.map(doc => (
+            <div key={doc.id} className="flex items-center gap-4"
+              style={{ padding: '14px 18px', borderTop: '1px solid var(--vo-border)' }}>
+              <div style={{
+                width: '40px', height: '40px', borderRadius: 'var(--vo-r)',
+                background: 'var(--vo-accent-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <svg className="vo-i" style={{ color: 'var(--vo-accent)' }}><use href="#vo-file-text" /></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className="vo-body-sm" style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {doc.original_name}
+                </p>
+                <p className="vo-caption" style={{ marginTop: '2px' }}>
+                  {doc.category} · {new Date(doc.created_at).toLocaleDateString()}
+                </p>
+              </div>
+              <button onClick={() => deleteDoc(doc.id, doc.original_name)}
+                className="vo-btn vo-btn--ghost"
+                style={{ width: '32px', height: '32px', padding: 0, color: 'var(--vo-sev-critical)', flexShrink: 0 }}
+                title="Delete document">
+                <svg className="vo-i vo-i-sm"><use href="#vo-x" /></svg>
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>

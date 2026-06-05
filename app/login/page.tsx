@@ -37,73 +37,84 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: 'linear-gradient(135deg, #003057 0%, #005a9e 100%)' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6"
+      style={{ background: 'var(--vo-text)' }}>
       <div className="w-full max-w-sm">
+
         {/* Logo / Brand */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4" style={{ backgroundColor: '#E07B39' }}>
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <path d="M20 4L36 12V28L20 36L4 28V12L20 4Z" fill="white" fillOpacity="0.9" />
-              <path d="M20 14L26 18V26L20 30L14 26V18L20 14Z" fill="#E07B39" />
+        <div className="text-center" style={{ marginBottom: '40px' }}>
+          <div className="inline-flex items-center justify-center" style={{
+            width: '72px', height: '72px', marginBottom: '16px',
+            borderRadius: 'var(--vo-r-lg)', background: 'var(--vo-accent)',
+          }}>
+            <svg className="vo-i vo-i-lg" style={{ color: 'var(--vo-accent-fg)' }}>
+              <use href="#vo-hexagon" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">VoiceOps</h1>
-          <p className="text-blue-200 mt-1 text-sm">Incident Handler — Scania Production</p>
+          <h1 className="vo-h1" style={{ color: 'var(--vo-bg)' }}>VoiceOps</h1>
+          <p className="vo-caption" style={{ marginTop: '4px' }}>
+            Incident Handler — Scania Production
+          </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">Sign In</h2>
+        <div className="vo-card" style={{ padding: '28px' }}>
+          <h2 className="vo-h3" style={{ marginBottom: '24px' }}>Sign In</h2>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Employee ID</label>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <div className="vo-field">
+              <label className="vo-label">Employee ID</label>
               <input
                 type="text"
                 value={employeeId}
                 onChange={e => setEmployeeId(e.target.value)}
                 placeholder="e.g. OP001"
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-lg font-mono tracking-widest uppercase"
+                className="vo-input vo-input--mono"
                 autoCapitalize="characters"
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Password</label>
+            <div className="vo-field">
+              <label className="vo-label">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-lg"
+                className="vo-input"
                 required
               />
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                {error}
+              <div className="vo-banner">
+                <svg className="vo-i vo-i-sm" style={{ flexShrink: 0 }}>
+                  <use href="#vo-alert-triangle" />
+                </svg>
+                <div>
+                  <p className="vo-banner__title">Login Failed</p>
+                  <p className="vo-body-sm" style={{ marginTop: '3px' }}>{error}</p>
+                </div>
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 rounded-xl text-white font-bold text-lg transition-all active:scale-95 disabled:opacity-60"
-              style={{ backgroundColor: loading ? '#888' : '#003057' }}
-            >
+            <button type="submit" disabled={loading} className="vo-btn vo-btn--primary vo-btn--block vo-btn--lg">
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-gray-100 text-xs text-gray-400 text-center space-y-1">
-            <p>Demo: <span className="font-mono font-medium">OP001</span> / <span className="font-mono font-medium">operator123</span></p>
-            <p>Admin: <span className="font-mono font-medium">ADMIN001</span> / <span className="font-mono font-medium">admin123</span></p>
+          <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--vo-border)' }}>
+            <p className="vo-caption" style={{ textAlign: 'center' }}>
+              Demo: <span className="vo-mono">OP001</span> / <span className="vo-mono">operator123</span>
+            </p>
+            <p className="vo-caption" style={{ textAlign: 'center', marginTop: '4px' }}>
+              Admin: <span className="vo-mono">ADMIN001</span> / <span className="vo-mono">admin123</span>
+            </p>
           </div>
         </div>
 
-        <p className="text-center text-blue-300 text-xs mt-6">
+        <p className="vo-caption" style={{ textAlign: 'center', marginTop: '24px' }}>
           Contact your supervisor if you cannot log in.
         </p>
       </div>

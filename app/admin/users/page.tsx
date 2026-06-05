@@ -28,11 +28,7 @@ export default function UsersPage() {
   const [success, setSuccess] = useState('');
 
   const [form, setForm] = useState({
-    name: '',
-    employee_id: '',
-    password: '',
-    role: 'operator',
-    department: 'Assembly Line A',
+    name: '', employee_id: '', password: '', role: 'operator', department: 'Assembly Line A',
   });
 
   useEffect(() => {
@@ -91,99 +87,81 @@ export default function UsersPage() {
   const admins = users.filter(u => u.role === 'admin');
 
   return (
-    <div className="min-h-screen" style={{ background: '#F4F6F9' }}>
-      <header className="px-6 py-4 flex items-center gap-4 shadow-sm" style={{ backgroundColor: '#003057' }}>
-        <Link href="/admin" className="text-blue-300 hover:text-white transition">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-          </svg>
+    <div className="min-h-screen" style={{ background: 'var(--vo-bg)' }}>
+      <header className="px-6 py-4 flex items-center gap-4"
+        style={{ background: 'var(--vo-text)', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+        <Link href="/admin" style={{ color: 'var(--vo-text-muted)', display: 'flex', alignItems: 'center' }}>
+          <svg className="vo-i"><use href="#vo-arrow-left" /></svg>
         </Link>
-        <div className="flex-1">
-          <h1 className="text-white font-bold">User Management</h1>
-          <p className="text-blue-300 text-xs">{users.length} accounts total</p>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontWeight: 700, fontSize: '15px', color: 'var(--vo-bg)', lineHeight: 1 }}>User Management</h1>
+          <p className="vo-caption" style={{ color: 'var(--vo-text-muted)', marginTop: '2px' }}>
+            {users.length} accounts total
+          </p>
         </div>
         <button
           onClick={() => { setShowForm(!showForm); setError(''); setSuccess(''); }}
-          className="text-sm font-medium px-4 py-2 rounded-xl transition"
-          style={{ backgroundColor: '#E07B39', color: 'white' }}
+          className="vo-btn vo-btn--primary"
+          style={{ height: '36px', padding: '0 16px' }}
         >
-          {showForm ? 'Cancel' : '+ New User'}
+          {showForm
+            ? <><svg className="vo-i vo-i-sm"><use href="#vo-x" /></svg> Cancel</>
+            : <><svg className="vo-i vo-i-sm"><use href="#vo-plus" /></svg> New User</>
+          }
         </button>
       </header>
 
-      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* Create User Form */}
         {showForm && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 fade-in-up">
-            <h2 className="font-bold text-gray-700 mb-5">Create New User</h2>
-            <form onSubmit={handleCreate} className="space-y-4">
+          <div className="vo-card vo-card--pad fade-in-up">
+            <h2 className="vo-h3" style={{ marginBottom: '20px' }}>Create New User</h2>
+            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    value={form.name}
+                <div className="vo-field">
+                  <label className="vo-label">Full Name</label>
+                  <input type="text" value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="e.g. Erik Johansson"
-                    className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
-                    required
-                  />
+                    placeholder="e.g. Erik Johansson" className="vo-input" required />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Employee ID</label>
-                  <input
-                    type="text"
-                    value={form.employee_id}
+                <div className="vo-field">
+                  <label className="vo-label">Employee ID</label>
+                  <input type="text" value={form.employee_id}
                     onChange={e => setForm(f => ({ ...f, employee_id: e.target.value.toUpperCase() }))}
-                    placeholder="e.g. OP003"
-                    className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none font-mono tracking-widest uppercase"
-                    required
-                  />
+                    placeholder="e.g. OP003" className="vo-input vo-input--mono" required />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Password</label>
-                  <input
-                    type="text"
-                    value={form.password}
+                <div className="vo-field">
+                  <label className="vo-label">Password</label>
+                  <input type="text" value={form.password}
                     onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                    placeholder="Set a temporary password"
-                    className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
-                    required
-                    minLength={6}
-                  />
+                    placeholder="Set a temporary password" className="vo-input" required minLength={6} />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Role</label>
-                  <select
-                    value={form.role}
-                    onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none bg-white"
-                  >
+                <div className="vo-field">
+                  <label className="vo-label">Role</label>
+                  <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
+                    className="vo-input" style={{ cursor: 'pointer' }}>
                     <option value="operator">Operator</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Department</label>
-                  <select
-                    value={form.department}
-                    onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none bg-white"
-                  >
+                <div className="vo-field" style={{ gridColumn: '1 / -1' }}>
+                  <label className="vo-label">Department</label>
+                  <select value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
+                    className="vo-input" style={{ cursor: 'pointer' }}>
                     {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
                   </select>
                 </div>
               </div>
 
-              {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
+              {error && (
+                <div className="vo-banner">
+                  <svg className="vo-i vo-i-sm" style={{ flexShrink: 0 }}><use href="#vo-alert-triangle" /></svg>
+                  <span className="vo-body-sm">{error}</span>
+                </div>
+              )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 rounded-xl text-white font-bold transition disabled:opacity-60"
-                style={{ backgroundColor: '#003057' }}
-              >
+              <button type="submit" disabled={loading} className="vo-btn vo-btn--primary vo-btn--block vo-btn--lg">
                 {loading ? 'Creating...' : 'Create User'}
               </button>
             </form>
@@ -191,37 +169,45 @@ export default function UsersPage() {
         )}
 
         {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm fade-in-up">
-            {success}
+          <div className="fade-in-up" style={{
+            padding: '12px 16px', borderRadius: 'var(--vo-r)',
+            background: 'var(--vo-sev-low-bg)', border: '1px solid var(--vo-sev-low-line)',
+          }}>
+            <div className="flex items-center gap-2">
+              <svg className="vo-i vo-i-sm" style={{ color: 'var(--vo-sev-low)', flexShrink: 0 }}><use href="#vo-check-circle" /></svg>
+              <p className="vo-body-sm" style={{ color: 'var(--vo-sev-low)' }}>{success}</p>
+            </div>
           </div>
         )}
 
         {/* Operators */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-bold text-gray-700">Operators ({operators.length})</h2>
+        <div className="vo-card">
+          <div className="vo-card__head">
+            <p style={{ fontWeight: 700, fontSize: '15px' }}>
+              Operators{' '}
+              <span className="vo-mono" style={{ fontSize: '13px', color: 'var(--vo-text-muted)' }}>({operators.length})</span>
+            </p>
           </div>
           {operators.length === 0 ? (
-            <p className="text-gray-400 text-sm p-6">No operators yet.</p>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {operators.map(u => (
-                <UserRow key={u.id} user={u} isSelf={u.id === currentUserId} onDelete={handleDelete} />
-              ))}
+            <div style={{ padding: '24px' }}>
+              <p className="vo-body-sm" style={{ color: 'var(--vo-text-muted)' }}>No operators yet.</p>
             </div>
-          )}
+          ) : operators.map(u => (
+            <UserRow key={u.id} user={u} isSelf={u.id === currentUserId} onDelete={handleDelete} />
+          ))}
         </div>
 
         {/* Admins */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-bold text-gray-700">Admins ({admins.length})</h2>
+        <div className="vo-card">
+          <div className="vo-card__head">
+            <p style={{ fontWeight: 700, fontSize: '15px' }}>
+              Admins{' '}
+              <span className="vo-mono" style={{ fontSize: '13px', color: 'var(--vo-text-muted)' }}>({admins.length})</span>
+            </p>
           </div>
-          <div className="divide-y divide-gray-50">
-            {admins.map(u => (
-              <UserRow key={u.id} user={u} isSelf={u.id === currentUserId} onDelete={handleDelete} />
-            ))}
-          </div>
+          {admins.map(u => (
+            <UserRow key={u.id} user={u} isSelf={u.id === currentUserId} onDelete={handleDelete} />
+          ))}
         </div>
       </div>
     </div>
@@ -234,38 +220,46 @@ function UserRow({ user, isSelf, onDelete }: {
   onDelete: (id: number, name: string) => void;
 }) {
   return (
-    <div className="px-6 py-4 flex items-center gap-4">
-      <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 text-sm"
-        style={{ backgroundColor: user.role === 'admin' ? '#E07B39' : '#003057' }}>
+    <div className="flex items-center gap-4"
+      style={{ padding: '14px 18px', borderTop: '1px solid var(--vo-border)' }}>
+      <div style={{
+        width: '40px', height: '40px', borderRadius: '50%',
+        background: user.role === 'admin' ? 'var(--vo-accent)' : 'var(--vo-text)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'var(--vo-font-mono)', fontWeight: 700, fontSize: '12px',
+        color: user.role === 'admin' ? 'var(--vo-accent-fg)' : 'var(--vo-bg)',
+        flexShrink: 0,
+      }}>
         {user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
       </div>
-      <div className="flex-1 min-w-0">
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-gray-800">{user.name}</p>
-          {isSelf && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">You</span>}
+          <p className="vo-body-sm" style={{ fontWeight: 600 }}>{user.name}</p>
+          {isSelf && (
+            <span className="vo-badge vo-badge--bare vo-badge--prog" style={{ fontSize: '10px', padding: '2px 6px' }}>
+              You
+            </span>
+          )}
         </div>
-        <p className="text-xs text-gray-400 mt-0.5">
-          <span className="font-mono font-medium text-gray-600">{user.employee_id}</span>
+        <p className="vo-caption" style={{ marginTop: '2px' }}>
+          <span className="vo-mono" style={{ color: 'var(--vo-text-2)' }}>{user.employee_id}</span>
           {user.department && <> · {user.department}</>}
           <> · Joined {new Date(user.created_at).toLocaleDateString()}</>
         </p>
       </div>
-      <span className="text-xs px-2 py-1 rounded-full font-medium flex-shrink-0"
-        style={{
-          backgroundColor: user.role === 'admin' ? '#fff3eb' : '#f0f4ff',
-          color: user.role === 'admin' ? '#E07B39' : '#003057',
-        }}>
+      <span className="vo-badge vo-badge--bare" style={{
+        flexShrink: 0,
+        color: user.role === 'admin' ? 'var(--vo-accent)' : 'var(--vo-status-prog)',
+        background: user.role === 'admin' ? 'var(--vo-accent-tint)' : 'var(--vo-status-prog-bg)',
+      }}>
         {user.role}
       </span>
       {!isSelf && (
-        <button
-          onClick={() => onDelete(user.id, user.name)}
-          className="text-gray-300 hover:text-red-500 transition flex-shrink-0 p-1"
-          title="Delete user"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-          </svg>
+        <button onClick={() => onDelete(user.id, user.name)}
+          className="vo-btn vo-btn--ghost"
+          style={{ width: '32px', height: '32px', padding: 0, color: 'var(--vo-text-muted)', flexShrink: 0 }}
+          title="Delete user">
+          <svg className="vo-i vo-i-sm"><use href="#vo-x" /></svg>
         </button>
       )}
     </div>

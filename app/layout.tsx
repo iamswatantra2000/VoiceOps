@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "VoiceOps — Incident Handler",
@@ -12,8 +13,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className="h-full vo">
+      <body className="min-h-full flex flex-col">
+        <Script src="/icons.js" strategy="afterInteractive" />
+        {children}
+      </body>
     </html>
   );
 }

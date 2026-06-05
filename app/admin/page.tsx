@@ -61,119 +61,148 @@ export default function AdminDashboard() {
     router.push('/login');
   }
 
-  const SEVERITY_COLORS: Record<string, string> = {
-    low: '#22c55e', medium: '#f59e0b', high: '#ef4444', critical: '#7c3aed',
+  const STATUS_BADGE: Record<string, string> = {
+    open: 'vo-badge--open', in_progress: 'vo-badge--prog', resolved: 'vo-badge--done',
+  };
+  const STATUS_LABEL: Record<string, string> = {
+    open: 'Open', in_progress: 'In Progress', resolved: 'Resolved',
   };
 
   return (
-    <div className="min-h-screen" style={{ background: '#F4F6F9' }}>
+    <div className="min-h-screen" style={{ background: 'var(--vo-bg)' }}>
+
       {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between shadow-sm" style={{ backgroundColor: '#003057' }}>
+      <header className="px-6 py-4 flex items-center justify-between"
+        style={{ background: 'var(--vo-text)', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#E07B39' }}>
-            <svg width="18" height="18" viewBox="0 0 40 40" fill="none">
-              <path d="M20 4L36 12V28L20 36L4 28V12L20 4Z" fill="white" fillOpacity="0.9" />
+          <div style={{
+            width: '30px', height: '30px', borderRadius: 'var(--vo-r)',
+            background: 'var(--vo-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg className="vo-i" style={{ width: '16px', height: '16px', color: 'var(--vo-accent-fg)' }}>
+              <use href="#vo-hexagon" />
             </svg>
           </div>
           <div>
-            <div className="text-white font-bold">VoiceOps Admin</div>
-            {user && <div className="text-blue-300 text-xs">{user.name} · Plant Management</div>}
+            <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--vo-bg)', lineHeight: 1 }}>VoiceOps Admin</div>
+            {user && (
+              <div className="vo-caption" style={{ color: 'var(--vo-text-muted)', marginTop: '2px' }}>
+                {user.name} · Plant Management
+              </div>
+            )}
           </div>
         </div>
-        <button onClick={logout} className="text-blue-200 text-sm px-4 py-1.5 rounded-lg border border-blue-700 hover:bg-blue-900 transition">
+        <button onClick={logout} className="vo-btn vo-btn--ghost"
+          style={{ height: '32px', padding: '0 14px', color: 'var(--vo-text-muted)' }}>
+          <svg className="vo-i vo-i-sm"><use href="#vo-log-out" /></svg>
           Sign Out
         </button>
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px' }}>
+
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Total Incidents', value: stats.total, color: '#003057' },
-            { label: 'Open', value: stats.open, color: '#f59e0b' },
-            { label: 'Critical', value: stats.critical, color: '#ef4444' },
-            { label: 'Documents', value: stats.documents, color: '#22c55e' },
-          ].map(s => (
-            <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <div className="text-3xl font-black" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-gray-500 text-sm mt-1">{s.label}</div>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" style={{ marginBottom: '32px' }}>
+          <div className="vo-stat vo-stat--accent">
+            <div className="vo-stat__value">{stats.total}</div>
+            <div className="vo-stat__label">Total Incidents</div>
+          </div>
+          <div className="vo-stat vo-stat--open">
+            <div className="vo-stat__value">{stats.open}</div>
+            <div className="vo-stat__label">Open</div>
+          </div>
+          <div className="vo-stat vo-stat--critical">
+            <div className="vo-stat__value">{stats.critical}</div>
+            <div className="vo-stat__label">Critical</div>
+          </div>
+          <div className="vo-stat vo-stat--done">
+            <div className="vo-stat__value">{stats.documents}</div>
+            <div className="vo-stat__label">Documents</div>
+          </div>
         </div>
 
         {/* Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Link href="/admin/documents" className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#003057' }}>
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-              </svg>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ marginBottom: '32px' }}>
+          <Link href="/admin/documents" className="vo-card vo-card--pad flex items-center gap-4"
+            style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: 'var(--vo-r)',
+              background: 'var(--vo-accent-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <svg className="vo-i" style={{ color: 'var(--vo-accent)' }}><use href="#vo-file-text" /></svg>
             </div>
             <div>
-              <div className="font-bold text-gray-800">Knowledge Base</div>
-              <div className="text-sm text-gray-500">Upload PDFs, manuals, SOPs</div>
+              <p className="vo-body" style={{ fontWeight: 700 }}>Knowledge Base</p>
+              <p className="vo-caption">Upload PDFs, manuals, SOPs</p>
             </div>
           </Link>
 
-          <Link href="/admin/incidents" className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#E07B39' }}>
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-              </svg>
+          <Link href="/admin/incidents" className="vo-card vo-card--pad flex items-center gap-4"
+            style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: 'var(--vo-r)',
+              background: 'var(--vo-sev-high-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <svg className="vo-i" style={{ color: 'var(--vo-sev-high)' }}><use href="#vo-alert-triangle" /></svg>
             </div>
             <div>
-              <div className="font-bold text-gray-800">All Incidents</div>
-              <div className="text-sm text-gray-500">View, filter, and manage reports</div>
+              <p className="vo-body" style={{ fontWeight: 700 }}>All Incidents</p>
+              <p className="vo-caption">View, filter, and manage reports</p>
             </div>
           </Link>
 
-          <Link href="/admin/users" className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#22c55e' }}>
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-              </svg>
+          <Link href="/admin/users" className="vo-card vo-card--pad flex items-center gap-4"
+            style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: 'var(--vo-r)',
+              background: 'var(--vo-sev-low-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <svg className="vo-i" style={{ color: 'var(--vo-sev-low)' }}><use href="#vo-users" /></svg>
             </div>
             <div>
-              <div className="font-bold text-gray-800">Users</div>
-              <div className="text-sm text-gray-500">Create and manage accounts</div>
+              <p className="vo-body" style={{ fontWeight: 700 }}>Users</p>
+              <p className="vo-caption">Create and manage accounts</p>
             </div>
           </Link>
         </div>
 
         {/* Recent Incidents */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-bold text-gray-700">Recent Incidents</h2>
-            <Link href="/admin/incidents" className="text-sm text-blue-600 hover:underline">View all</Link>
+        <div className="vo-card">
+          <div className="vo-card__head">
+            <p className="vo-h3" style={{ fontSize: '16px' }}>Recent Incidents</p>
+            <Link href="/admin/incidents" className="vo-body-sm"
+              style={{ color: 'var(--vo-accent)', textDecoration: 'none', fontWeight: 600 }}>
+              View all
+            </Link>
           </div>
-          <div className="divide-y divide-gray-50">
-            {recentIncidents.length === 0 && (
-              <p className="text-gray-400 text-sm p-6">No incidents reported yet.</p>
-            )}
-            {recentIncidents.map(inc => {
-              let summary = 'Incident recorded';
-              try { summary = JSON.parse(inc.ai_analysis).summary; } catch {}
-              return (
-                <div key={inc.id} className="px-6 py-4 flex items-start gap-4">
-                  <span className="text-xs font-bold px-2 py-1 rounded-full mt-0.5 flex-shrink-0" style={{
-                    backgroundColor: SEVERITY_COLORS[inc.severity] + '20',
-                    color: SEVERITY_COLORS[inc.severity],
-                  }}>
-                    {inc.severity.toUpperCase()}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{summary}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {inc.operator_name} · {inc.department} · {new Date(inc.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">
-                    {inc.status}
-                  </span>
+          {recentIncidents.length === 0 && (
+            <div style={{ padding: '24px' }}>
+              <p className="vo-body-sm" style={{ color: 'var(--vo-text-muted)' }}>No incidents reported yet.</p>
+            </div>
+          )}
+          {recentIncidents.map((inc, idx) => {
+            let summary = 'Incident recorded';
+            try { summary = JSON.parse(inc.ai_analysis).summary; } catch {}
+            return (
+              <div key={inc.id} className="flex items-start gap-4"
+                style={{ padding: '14px 18px', borderTop: idx === 0 ? '1px solid var(--vo-border)' : '1px solid var(--vo-border)' }}>
+                <span className={`vo-badge vo-badge--${inc.severity}`} style={{ flexShrink: 0, marginTop: '2px' }}>
+                  {inc.severity.toUpperCase()}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p className="vo-body-sm" style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {summary}
+                  </p>
+                  <p className="vo-caption" style={{ marginTop: '2px' }}>
+                    {inc.operator_name} · {inc.department} · {new Date(inc.created_at).toLocaleString()}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
+                <span className={`vo-badge vo-badge--bare ${STATUS_BADGE[inc.status] || ''}`} style={{ flexShrink: 0 }}>
+                  {STATUS_LABEL[inc.status] || inc.status}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

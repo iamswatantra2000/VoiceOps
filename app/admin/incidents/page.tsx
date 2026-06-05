@@ -29,19 +29,27 @@ interface ParsedAnalysis {
   safetyWarnings: string[];
 }
 
-const SEVERITY_COLORS: Record<string, { color: string; bg: string }> = {
-  low: { color: '#22c55e', bg: '#f0fdf4' },
-  medium: { color: '#f59e0b', bg: '#fffbeb' },
-  high: { color: '#ef4444', bg: '#fef2f2' },
-  critical: { color: '#7c3aed', bg: '#fdf4ff' },
+const SEV_BADGE: Record<string, string> = {
+  low: 'vo-badge--low', medium: 'vo-badge--medium', high: 'vo-badge--high', critical: 'vo-badge--critical',
 };
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  open:        { label: 'Open',        color: '#f59e0b', bg: '#fffbeb' },
-  in_progress: { label: 'In Progress', color: '#3b82f6', bg: '#eff6ff' },
-  resolved:    { label: 'Resolved',    color: '#22c55e', bg: '#f0fdf4' },
+const SEV_COLOR: Record<string, string> = {
+  low: 'var(--vo-sev-low)', medium: 'var(--vo-sev-medium)', high: 'var(--vo-sev-high)', critical: 'var(--vo-sev-critical)',
 };
-
+const SEV_BG: Record<string, string> = {
+  low: 'var(--vo-sev-low-bg)', medium: 'var(--vo-sev-medium-bg)', high: 'var(--vo-sev-high-bg)', critical: 'var(--vo-sev-critical-bg)',
+};
+const SEV_LINE: Record<string, string> = {
+  low: 'var(--vo-sev-low-line)', medium: 'var(--vo-sev-medium-line)', high: 'var(--vo-sev-high-line)', critical: 'var(--vo-sev-critical-line)',
+};
+const STATUS_BADGE: Record<string, string> = {
+  open: 'vo-badge--open', in_progress: 'vo-badge--prog', resolved: 'vo-badge--done',
+};
+const STATUS_CONFIG: Record<string, { label: string }> = {
+  open: { label: 'Open' }, in_progress: { label: 'In Progress' }, resolved: { label: 'Resolved' },
+};
+const SHIFT_ICON: Record<string, string> = {
+  Morning: 'sunrise', Afternoon: 'sun', Night: 'moon',
+};
 const STATUS_STEPS = ['open', 'in_progress', 'resolved'];
 
 export default function IncidentsPage() {
@@ -49,6 +57,8 @@ export default function IncidentsPage() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selected, setSelected] = useState<Incident | null>(null);
   const [filter, setFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [shiftFilter, setShiftFilter] = useState('all');
   const [resolutionNote, setResolutionNote] = useState('');
   const [updating, setUpdating] = useState(false);
 
@@ -74,10 +84,8 @@ export default function IncidentsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status, resolution_note: resolutionNote }),
     });
-
     if (res.ok) {
       const { incident } = await res.json();
-      // Update both the list and the selected panel
       setIncidents(prev => prev.map(i => i.id === id ? { ...i, ...incident } : i));
       setSelected(prev => prev?.id === id ? { ...prev, ...incident } : prev);
       setResolutionNote('');
@@ -85,12 +93,9 @@ export default function IncidentsPage() {
     setUpdating(false);
   }
 
-  const statusFilters = ['all', 'open', 'in_progress', 'resolved'];
   const severityFilters = ['critical', 'high', 'medium', 'low'];
   const shiftFilters = ['all', 'Morning', 'Afternoon', 'Night'];
-
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [shiftFilter, setShiftFilter] = useState('all');
+  const statusFilters = ['all', 'open', 'in_progress', 'resolved'];
 
   const filtered = incidents.filter(i => {
     const matchSeverity = filter === 'all' || i.severity === filter;
@@ -100,105 +105,93 @@ export default function IncidentsPage() {
   });
 
   return (
-    <div className="min-h-screen" style={{ background: '#F4F6F9' }}>
-      <header className="px-6 py-4 flex items-center gap-4 shadow-sm" style={{ backgroundColor: '#003057' }}>
-        <Link href="/admin" className="text-blue-300 hover:text-white transition">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-          </svg>
+    <div className="min-h-screen" style={{ background: 'var(--vo-bg)' }}>
+      <header className="px-6 py-4 flex items-center gap-4"
+        style={{ background: 'var(--vo-text)', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+        <Link href="/admin" style={{ color: 'var(--vo-text-muted)', display: 'flex', alignItems: 'center' }}>
+          <svg className="vo-i"><use href="#vo-arrow-left" /></svg>
         </Link>
         <div>
-          <h1 className="text-white font-bold">All Incidents</h1>
-          <p className="text-blue-300 text-xs">{incidents.length} total reports</p>
+          <h1 style={{ fontWeight: 700, fontSize: '15px', color: 'var(--vo-bg)', lineHeight: 1 }}>All Incidents</h1>
+          <p className="vo-caption" style={{ color: 'var(--vo-text-muted)', marginTop: '2px' }}>
+            {incidents.length} total reports
+          </p>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 flex gap-6">
-        {/* Left: List */}
-        <div className="flex-1 min-w-0">
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px', display: 'flex', gap: '24px' }}>
 
-          {/* Severity filters */}
-          <div className="flex gap-2 mb-2 flex-wrap">
+        {/* Left: List */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+
+          {/* Severity chips */}
+          <div className="flex gap-2 flex-wrap" style={{ marginBottom: '8px' }}>
             {['all', ...severityFilters].map(f => (
-              <button key={f} onClick={() => setFilter(f)}
-                className="px-3 py-1.5 rounded-full text-sm font-medium transition"
-                style={{
-                  backgroundColor: filter === f ? '#003057' : 'white',
-                  color: filter === f ? 'white' : '#555',
-                  border: '1px solid #e5e7eb',
-                }}>
+              <button key={f} className="vo-chip" aria-pressed={filter === f ? 'true' : 'false'} onClick={() => setFilter(f)}>
                 {f === 'all' ? 'All Severity' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
 
-          {/* Shift filters */}
-          <div className="flex gap-2 mb-2 flex-wrap">
+          {/* Shift chips */}
+          <div className="flex gap-2 flex-wrap" style={{ marginBottom: '8px' }}>
             {shiftFilters.map(f => (
-              <button key={f} onClick={() => setShiftFilter(f)}
-                className="px-3 py-1.5 rounded-full text-sm font-medium transition"
-                style={{
-                  backgroundColor: shiftFilter === f ? '#4f46e5' : 'white',
-                  color: shiftFilter === f ? 'white' : '#555',
-                  border: '1px solid #e5e7eb',
-                }}>
-                {f === 'Morning' ? '🌅' : f === 'Afternoon' ? '☀️' : f === 'Night' ? '🌙' : ''} {f === 'all' ? 'All Shifts' : f}
+              <button key={f} className="vo-chip" aria-pressed={shiftFilter === f ? 'true' : 'false'} onClick={() => setShiftFilter(f)}>
+                {f !== 'all' && <svg className="vo-i vo-i-sm"><use href={`#vo-${SHIFT_ICON[f]}`} /></svg>}
+                {f === 'all' ? 'All Shifts' : f}
               </button>
             ))}
           </div>
 
-          {/* Status filters */}
-          <div className="flex gap-2 mb-4 flex-wrap">
-            {statusFilters.map(f => {
-              const cfg = f === 'all' ? null : STATUS_CONFIG[f];
-              return (
-                <button key={f} onClick={() => setStatusFilter(f)}
-                  className="px-3 py-1.5 rounded-full text-sm font-medium transition"
-                  style={{
-                    backgroundColor: statusFilter === f ? (cfg?.color || '#003057') : 'white',
-                    color: statusFilter === f ? 'white' : '#555',
-                    border: '1px solid #e5e7eb',
-                  }}>
-                  {f === 'all' ? 'All Status' : STATUS_CONFIG[f].label}
-                </button>
-              );
-            })}
+          {/* Status chips */}
+          <div className="flex gap-2 flex-wrap" style={{ marginBottom: '20px' }}>
+            {statusFilters.map(f => (
+              <button key={f} className="vo-chip" aria-pressed={statusFilter === f ? 'true' : 'false'} onClick={() => setStatusFilter(f)}>
+                {f === 'all' ? 'All Status' : STATUS_CONFIG[f].label}
+              </button>
+            ))}
           </div>
 
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {filtered.length === 0 && (
-              <div className="bg-white rounded-2xl p-8 text-center text-gray-400 text-sm">No incidents found.</div>
+              <div className="vo-card vo-card--pad" style={{ textAlign: 'center' }}>
+                <p className="vo-body-sm" style={{ color: 'var(--vo-text-muted)' }}>No incidents found.</p>
+              </div>
             )}
             {filtered.map(inc => {
               let summary = 'Incident recorded';
               try { summary = JSON.parse(inc.ai_analysis).summary; } catch {}
-              const sc = SEVERITY_COLORS[inc.severity] || { color: '#888', bg: '#f9f9f9' };
-              const stc = STATUS_CONFIG[inc.status] || { label: inc.status, color: '#888', bg: '#f9f9f9' };
+              const isSelected = selected?.id === inc.id;
               return (
-                <button key={inc.id} onClick={() => { setSelected(inc); setResolutionNote(''); }}
-                  className="w-full bg-white rounded-2xl p-4 border-2 text-left transition hover:shadow-md"
-                  style={{ borderColor: selected?.id === inc.id ? sc.color : 'transparent' }}>
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs font-bold px-2 py-1 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: sc.bg, color: sc.color }}>
-                      {inc.severity.toUpperCase()}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 leading-snug">{summary}</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {inc.operator_name} ({inc.employee_id}) · {inc.department}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(inc.created_at).toLocaleString()}
-                        {inc.shift && <> · {inc.shift === 'Morning' ? '🌅' : inc.shift === 'Afternoon' ? '☀️' : '🌙'} {inc.shift}</>}
-                        {inc.machine && <> · 🔧 {inc.machine}</>}
-                      </p>
-                    </div>
-                    <span className="text-xs px-2 py-1 rounded-full font-medium flex-shrink-0"
-                      style={{ backgroundColor: stc.bg, color: stc.color }}>
-                      {stc.label}
-                    </span>
+                <button key={inc.id}
+                  onClick={() => { setSelected(inc); setResolutionNote(''); }}
+                  className={`vo-row${isSelected ? ' vo-row--selected' : ''}`}
+                  style={isSelected ? { borderColor: SEV_COLOR[inc.severity] } : {}}>
+                  <span className={`vo-badge ${SEV_BADGE[inc.severity] || ''}`} style={{ flexShrink: 0 }}>
+                    {inc.severity.toUpperCase()}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="vo-body-sm" style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {summary}
+                    </p>
+                    <p className="vo-caption" style={{ marginTop: '4px' }}>
+                      {inc.operator_name} ({inc.employee_id}) · {inc.department}
+                    </p>
+                    <p className="vo-caption">
+                      {new Date(inc.created_at).toLocaleString()}
+                      {inc.shift && (
+                        <> · <svg className="vo-i vo-i-sm" style={{ verticalAlign: 'middle' }}>
+                          <use href={`#vo-${SHIFT_ICON[inc.shift] || 'clock'}`} />
+                        </svg> {inc.shift}</>
+                      )}
+                      {inc.machine && (
+                        <> · <svg className="vo-i vo-i-sm" style={{ verticalAlign: 'middle' }}><use href="#vo-wrench" /></svg> {inc.machine}</>
+                      )}
+                    </p>
                   </div>
+                  <span className={`vo-badge vo-badge--bare ${STATUS_BADGE[inc.status] || ''}`} style={{ flexShrink: 0 }}>
+                    {STATUS_CONFIG[inc.status]?.label || inc.status}
+                  </span>
                 </button>
               );
             })}
@@ -209,161 +202,172 @@ export default function IncidentsPage() {
         {selected && (() => {
           let analysis: ParsedAnalysis | null = null;
           try { analysis = JSON.parse(selected.ai_analysis); } catch {}
-          const sc = SEVERITY_COLORS[selected.severity] || { color: '#888', bg: '#f9f9f9' };
           const currentStep = STATUS_STEPS.indexOf(selected.status);
 
           return (
-            <div className="w-96 flex-shrink-0 space-y-4 fade-in-up">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-bold text-gray-700">Incident #{selected.id}</span>
-                  <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
+            <div style={{ width: '380px', flexShrink: 0 }} className="fade-in-up">
+              <div className="vo-card">
+                {/* Card header */}
+                <div className="vo-card__head">
+                  <span style={{ fontWeight: 700, fontSize: '15px' }}>Incident #{selected.id}</span>
+                  <button onClick={() => setSelected(null)} className="vo-btn vo-btn--ghost"
+                    style={{ width: '28px', height: '28px', padding: 0, color: 'var(--vo-text-muted)' }}>
+                    <svg className="vo-i vo-i-sm"><use href="#vo-x" /></svg>
+                  </button>
                 </div>
 
-                {/* Status Stepper */}
-                <div className="mb-5">
-                  <p className="text-xs font-medium text-gray-500 mb-3">STATUS</p>
-                  <div className="flex items-center gap-0">
-                    {STATUS_STEPS.map((step, i) => {
-                      const cfg = STATUS_CONFIG[step];
-                      const done = i <= currentStep;
-                      const isLast = i === STATUS_STEPS.length - 1;
-                      return (
-                        <div key={step} className="flex items-center flex-1">
-                          <div className="flex flex-col items-center">
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all"
-                              style={{
-                                backgroundColor: done ? cfg.color : 'white',
-                                borderColor: done ? cfg.color : '#d1d5db',
-                              }}>
-                              {done ? (
-                                i === currentStep && step !== 'resolved' ? (
-                                  <div className="w-2.5 h-2.5 rounded-full bg-white" />
-                                ) : (
-                                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                  </svg>
-                                )
-                              ) : (
-                                <div className="w-2 h-2 rounded-full bg-gray-300" />
-                              )}
+                <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                  {/* Status Stepper */}
+                  <div>
+                    <p className="vo-eyebrow" style={{ marginBottom: '12px' }}>Status</p>
+                    <div className="vo-stepper">
+                      {STATUS_STEPS.map((step, i) => {
+                        const isDone = i < currentStep;
+                        const isActive = i === currentStep;
+                        const isLast = i === STATUS_STEPS.length - 1;
+                        return (
+                          <div key={step} style={{ display: 'flex', alignItems: 'center', flex: isLast ? 'none' : 1 }}>
+                            <div className="vo-stepper__node">
+                              <div className={`vo-stepper__dot${isDone ? ' vo-stepper__dot--done' : ''}${isActive ? ' vo-stepper__dot--active' : ''}`}>
+                                {isDone
+                                  ? <svg className="vo-i" style={{ width: '12px', height: '12px' }}><use href="#vo-check" /></svg>
+                                  : <span style={{ fontSize: '10px', fontFamily: 'var(--vo-font-mono)', fontWeight: 700 }}>{i + 1}</span>
+                                }
+                              </div>
+                              <span className="vo-stepper__label">{STATUS_CONFIG[step].label}</span>
                             </div>
-                            <span className="text-xs mt-1 font-medium text-center leading-tight"
-                              style={{ color: done ? cfg.color : '#9ca3af', fontSize: '10px' }}>
-                              {cfg.label}
-                            </span>
+                            {!isLast && <div className={`vo-stepper__bar${isDone ? ' vo-stepper__bar--done' : ''}`} />}
                           </div>
-                          {!isLast && (
-                            <div className="flex-1 h-0.5 mb-4 mx-1 transition-all"
-                              style={{ backgroundColor: i < currentStep ? STATUS_CONFIG[STATUS_STEPS[i + 1]].color : '#e5e7eb' }} />
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
 
-                {/* Severity + Summary */}
-                <div className="rounded-xl p-3 mb-4 border" style={{ backgroundColor: sc.bg, borderColor: sc.color + '40' }}>
-                  <span className="text-xs font-bold" style={{ color: sc.color }}>{selected.severity.toUpperCase()} SEVERITY</span>
-                  {analysis && <p className="text-sm text-gray-700 mt-1">{analysis.summary}</p>}
-                </div>
-
-                {/* Meta */}
-                <div className="text-xs text-gray-500 space-y-1 mb-4">
-                  <p><strong>Operator:</strong> {selected.operator_name} ({selected.employee_id})</p>
-                  <p><strong>Department:</strong> {selected.department}</p>
-                  <p><strong>Reported:</strong> {new Date(selected.created_at).toLocaleString()}</p>
-                  {selected.shift && <p><strong>Shift:</strong> {selected.shift === 'Morning' ? '🌅' : selected.shift === 'Afternoon' ? '☀️' : '🌙'} {selected.shift}</p>}
-                  {selected.machine && <p><strong>Machine / Station:</strong> 🔧 {selected.machine}</p>}
-                  {analysis && <p><strong>Escalate to:</strong> {analysis.escalateTo}</p>}
-                </div>
-
-                {/* Transcript */}
-                <div className="mb-4">
-                  <p className="text-xs font-medium text-gray-500 mb-1">TRANSCRIPT</p>
-                  <p className="text-sm text-gray-600 italic bg-gray-50 rounded-lg p-3">&quot;{selected.voice_transcript}&quot;</p>
-                </div>
-
-                {/* Immediate Actions */}
-                {analysis?.immediateActions && (
-                  <div className="mb-4">
-                    <p className="text-xs font-medium text-gray-500 mb-2">IMMEDIATE ACTIONS</p>
-                    <ol className="space-y-1.5">
-                      {analysis.immediateActions.map((a, i) => (
-                        <li key={i} className="flex gap-2 text-sm text-gray-700">
-                          <span className="w-5 h-5 rounded-full text-white flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: '#003057', fontSize: '10px' }}>{i + 1}</span>
-                          {a}
-                        </li>
-                      ))}
-                    </ol>
+                  {/* Severity + Summary */}
+                  <div style={{
+                    padding: '12px', borderRadius: 'var(--vo-r)',
+                    background: SEV_BG[selected.severity] || 'var(--vo-surface-2)',
+                    border: `1px solid ${SEV_LINE[selected.severity] || 'var(--vo-border)'}`,
+                  }}>
+                    <span className={`vo-badge ${SEV_BADGE[selected.severity] || ''}`}>
+                      {selected.severity.toUpperCase()} SEVERITY
+                    </span>
+                    {analysis && <p className="vo-body-sm" style={{ marginTop: '8px' }}>{analysis.summary}</p>}
                   </div>
-                )}
 
-                {/* Safety Warnings */}
-                {analysis?.safetyWarnings && analysis.safetyWarnings.length > 0 && (
-                  <div className="rounded-xl p-3 mb-4 bg-red-50 border border-red-200">
-                    <p className="text-xs font-bold text-red-700 mb-1">SAFETY WARNINGS</p>
-                    {analysis.safetyWarnings.map((w, i) => (
-                      <p key={i} className="text-xs text-red-600">{w}</p>
+                  {/* Meta */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    {([
+                      ['Operator', `${selected.operator_name} (${selected.employee_id})`],
+                      ['Department', selected.department],
+                      ['Reported', new Date(selected.created_at).toLocaleString()],
+                      ...(selected.shift ? [['Shift', selected.shift]] : []),
+                      ...(selected.machine ? [['Machine', selected.machine]] : []),
+                      ...(analysis ? [['Escalate to', analysis.escalateTo]] : []),
+                    ] as [string, string][]).map(([key, val]) => (
+                      <p key={key} className="vo-caption">
+                        <strong style={{ color: 'var(--vo-text-2)', fontWeight: 600 }}>{key}:</strong> {val}
+                      </p>
                     ))}
                   </div>
-                )}
 
-                {/* Resolution Note (if resolved) */}
-                {selected.status === 'resolved' && selected.resolution_note && (
-                  <div className="rounded-xl p-3 mb-4 bg-green-50 border border-green-200">
-                    <p className="text-xs font-bold text-green-700 mb-1">RESOLUTION NOTE</p>
-                    <p className="text-sm text-green-800">{selected.resolution_note}</p>
-                    {selected.resolver_name && (
-                      <p className="text-xs text-green-600 mt-1">
-                        Resolved by {selected.resolver_name}
-                        {selected.resolved_at && <> · {new Date(selected.resolved_at).toLocaleString()}</>}
-                      </p>
-                    )}
+                  {/* Transcript */}
+                  <div>
+                    <p className="vo-eyebrow" style={{ marginBottom: '8px' }}>Transcript</p>
+                    <p className="vo-body-sm" style={{
+                      fontStyle: 'italic', color: 'var(--vo-text-2)',
+                      background: 'var(--vo-surface-2)', padding: '10px 12px', borderRadius: 'var(--vo-r)',
+                    }}>
+                      &quot;{selected.voice_transcript}&quot;
+                    </p>
                   </div>
-                )}
 
-                {/* Action Buttons */}
-                {selected.status === 'open' && (
-                  <button
-                    onClick={() => updateStatus(selected.id, 'in_progress')}
-                    disabled={updating}
-                    className="w-full py-3 rounded-xl font-bold text-white transition disabled:opacity-60"
-                    style={{ backgroundColor: '#3b82f6' }}
-                  >
-                    {updating ? 'Updating...' : '▶ Mark In Progress'}
-                  </button>
-                )}
+                  {/* Immediate Actions */}
+                  {analysis?.immediateActions && (
+                    <div>
+                      <p className="vo-eyebrow" style={{ marginBottom: '10px' }}>Immediate Actions</p>
+                      <ol style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {analysis.immediateActions.map((a, i) => (
+                          <li key={i} className="flex gap-2 items-start">
+                            <span className="vo-num" style={{ flexShrink: 0, width: '20px', height: '20px', fontSize: '10px' }}>{i + 1}</span>
+                            <span className="vo-body-sm">{a}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
 
-                {selected.status === 'in_progress' && (
-                  <div className="space-y-3">
-                    <textarea
-                      value={resolutionNote}
-                      onChange={e => setResolutionNote(e.target.value)}
-                      placeholder="Add a resolution note (optional) — what was done to fix it?"
-                      rows={3}
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-sm resize-none"
-                    />
-                    <button
-                      onClick={() => updateStatus(selected.id, 'resolved')}
-                      disabled={updating}
-                      className="w-full py-3 rounded-xl font-bold text-white transition disabled:opacity-60"
-                      style={{ backgroundColor: '#22c55e' }}
-                    >
-                      {updating ? 'Saving...' : '✓ Mark Resolved'}
+                  {/* Safety Warnings */}
+                  {analysis?.safetyWarnings && analysis.safetyWarnings.length > 0 && (
+                    <div className="vo-banner">
+                      <svg className="vo-i vo-i-sm" style={{ flexShrink: 0 }}><use href="#vo-alert-triangle" /></svg>
+                      <div>
+                        <p className="vo-banner__title">Safety Warnings</p>
+                        {analysis.safetyWarnings.map((w, i) => (
+                          <p key={i} className="vo-body-sm" style={{ marginTop: '4px' }}>{w}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Resolution Note */}
+                  {selected.status === 'resolved' && selected.resolution_note && (
+                    <div style={{
+                      padding: '12px', borderRadius: 'var(--vo-r)',
+                      background: 'var(--vo-sev-low-bg)', border: '1px solid var(--vo-sev-low-line)',
+                    }}>
+                      <p className="vo-eyebrow" style={{ color: 'var(--vo-sev-low)', marginBottom: '6px' }}>Resolution Note</p>
+                      <p className="vo-body-sm" style={{ color: 'var(--vo-sev-low)' }}>{selected.resolution_note}</p>
+                      {selected.resolver_name && (
+                        <p className="vo-caption" style={{ color: 'var(--vo-sev-low)', marginTop: '6px' }}>
+                          Resolved by {selected.resolver_name}
+                          {selected.resolved_at && <> · {new Date(selected.resolved_at).toLocaleString()}</>}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  {selected.status === 'open' && (
+                    <button onClick={() => updateStatus(selected.id, 'in_progress')} disabled={updating}
+                      className="vo-btn vo-btn--primary vo-btn--block">
+                      <svg className="vo-i"><use href="#vo-play" /></svg>
+                      {updating ? 'Updating...' : 'Mark In Progress'}
                     </button>
-                  </div>
-                )}
+                  )}
 
-                {selected.status === 'resolved' && (
-                  <div className="text-center py-2">
-                    <span className="text-green-600 text-sm font-semibold">✓ This incident is resolved</span>
-                  </div>
-                )}
+                  {selected.status === 'in_progress' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div className="vo-field">
+                        <label className="vo-label">Resolution Note (optional)</label>
+                        <textarea
+                          value={resolutionNote}
+                          onChange={e => setResolutionNote(e.target.value)}
+                          placeholder="What was done to fix it?"
+                          className="vo-textarea"
+                          style={{ minHeight: '80px' }}
+                        />
+                      </div>
+                      <button onClick={() => updateStatus(selected.id, 'resolved')} disabled={updating}
+                        className="vo-btn vo-btn--block"
+                        style={{ background: 'var(--vo-sev-low)', color: '#fff', borderColor: 'var(--vo-sev-low)', height: '42px' }}>
+                        <svg className="vo-i"><use href="#vo-check" /></svg>
+                        {updating ? 'Saving...' : 'Mark Resolved'}
+                      </button>
+                    </div>
+                  )}
+
+                  {selected.status === 'resolved' && (
+                    <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                      <span className="vo-body-sm flex items-center justify-center gap-2"
+                        style={{ color: 'var(--vo-sev-low)', fontWeight: 600 }}>
+                        <svg className="vo-i vo-i-sm"><use href="#vo-check-circle" /></svg>
+                        This incident is resolved
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           );

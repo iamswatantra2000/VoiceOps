@@ -28,10 +28,17 @@ interface IncidentResult {
 }
 
 const SEVERITY_CONFIG = {
-  low: { label: 'LOW', color: '#22c55e', bg: '#f0fdf4', border: '#bbf7d0' },
-  medium: { label: 'MEDIUM', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
-  high: { label: 'HIGH', color: '#ef4444', bg: '#fef2f2', border: '#fecaca' },
-  critical: { label: 'CRITICAL', color: '#7c3aed', bg: '#fdf4ff', border: '#e9d5ff' },
+  low:      { label: 'LOW',      badgeClass: 'vo-badge--low',      color: 'var(--vo-sev-low)',      bg: 'var(--vo-sev-low-bg)',      border: 'var(--vo-sev-low-line)' },
+  medium:   { label: 'MEDIUM',   badgeClass: 'vo-badge--medium',   color: 'var(--vo-sev-medium)',   bg: 'var(--vo-sev-medium-bg)',   border: 'var(--vo-sev-medium-line)' },
+  high:     { label: 'HIGH',     badgeClass: 'vo-badge--high',     color: 'var(--vo-sev-high)',     bg: 'var(--vo-sev-high-bg)',     border: 'var(--vo-sev-high-line)' },
+  critical: { label: 'CRITICAL', badgeClass: 'vo-badge--critical', color: 'var(--vo-sev-critical)', bg: 'var(--vo-sev-critical-bg)', border: 'var(--vo-sev-critical-line)' },
+};
+
+const STATUS_BADGE: Record<string, string> = {
+  open: 'vo-badge--open', in_progress: 'vo-badge--prog', resolved: 'vo-badge--done',
+};
+const STATUS_LABEL: Record<string, string> = {
+  open: 'Open', in_progress: 'In Progress', resolved: 'Resolved',
 };
 
 type Phase = 'idle' | 'recording' | 'processing' | 'result';
@@ -45,10 +52,10 @@ function getAutoShift(): Shift {
   return 'Night';
 }
 
-const SHIFT_CONFIG: Record<Shift, { icon: string; color: string; bg: string; border: string }> = {
-  Morning:   { icon: '🌅', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
-  Afternoon: { icon: '☀️',  color: '#0369a1', bg: '#eff6ff', border: '#bae6fd' },
-  Night:     { icon: '🌙', color: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe' },
+const SHIFT_CONFIG: Record<Shift, { iconId: string; color: string; bg: string }> = {
+  Morning:   { iconId: 'sunrise', color: 'var(--vo-shift-morning)',   bg: 'var(--vo-shift-morning-bg)' },
+  Afternoon: { iconId: 'sun',     color: 'var(--vo-shift-afternoon)', bg: 'var(--vo-shift-afternoon-bg)' },
+  Night:     { iconId: 'moon',    color: 'var(--vo-shift-night)',     bg: 'var(--vo-shift-night-bg)' },
 };
 
 export default function OperatorPage() {
@@ -94,9 +101,7 @@ export default function OperatorPage() {
   }
 
   const stopRecording = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
+    if (recognitionRef.current) recognitionRef.current.stop();
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
 
@@ -149,7 +154,6 @@ export default function OperatorPage() {
     recognition.start();
     setPhase('recording');
     setRecordingTime(0);
-
     timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
   }
 
@@ -206,26 +210,38 @@ export default function OperatorPage() {
   const severityConfig = result ? SEVERITY_CONFIG[result.analysis.severity] : null;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F4F6F9' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--vo-bg)' }}>
+
       {/* Header */}
-      <header className="px-4 py-3 flex items-center justify-between shadow-sm" style={{ backgroundColor: '#003057' }}>
+      <header className="flex items-center justify-between px-4 py-3"
+        style={{ background: 'var(--vo-text)', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#E07B39' }}>
-            <svg width="18" height="18" viewBox="0 0 40 40" fill="none">
-              <path d="M20 4L36 12V28L20 36L4 28V12L20 4Z" fill="white" fillOpacity="0.9" />
-              <path d="M20 14L26 18V26L20 30L14 26V18L20 14Z" fill="#E07B39" />
+          <div style={{
+            width: '30px', height: '30px', borderRadius: 'var(--vo-r)',
+            background: 'var(--vo-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg className="vo-i" style={{ width: '16px', height: '16px', color: 'var(--vo-accent-fg)' }}>
+              <use href="#vo-hexagon" />
             </svg>
           </div>
           <div>
-            <div className="text-white font-bold text-sm leading-none">VoiceOps</div>
-            {user && <div className="text-blue-300 text-xs mt-0.5">{user.name} · {user.department}</div>}
+            <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--vo-bg)', lineHeight: 1 }}>VoiceOps</div>
+            {user && (
+              <div className="vo-caption" style={{ color: 'var(--vo-text-muted)', marginTop: '2px' }}>
+                {user.name} · {user.department}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setShowHistory(!showHistory)} className="text-blue-200 text-xs px-3 py-1.5 rounded-lg border border-blue-700 hover:bg-blue-900 transition">
+          <button onClick={() => setShowHistory(!showHistory)} className="vo-btn vo-btn--ghost"
+            style={{ height: '32px', padding: '0 12px', color: 'var(--vo-text-muted)' }}>
+            <svg className="vo-i vo-i-sm"><use href="#vo-history" /></svg>
             History
           </button>
-          <button onClick={logout} className="text-blue-200 text-xs px-3 py-1.5 rounded-lg border border-blue-700 hover:bg-blue-900 transition">
+          <button onClick={logout} className="vo-btn vo-btn--ghost"
+            style={{ height: '32px', padding: '0 12px', color: 'var(--vo-text-muted)' }}>
+            <svg className="vo-i vo-i-sm"><use href="#vo-log-out" /></svg>
             Sign Out
           </button>
         </div>
@@ -233,63 +249,56 @@ export default function OperatorPage() {
 
       {/* History Drawer */}
       {showHistory && (
-        <div className="bg-white border-b px-4 py-3 fade-in-up">
-          <h3 className="text-sm font-semibold text-gray-600 mb-3">Recent Incidents</h3>
+        <div className="fade-in-up" style={{
+          background: 'var(--vo-surface)', borderBottom: '1px solid var(--vo-border)', padding: '16px',
+        }}>
+          <p className="vo-eyebrow" style={{ marginBottom: '12px' }}>Recent Incidents</p>
           {history.length === 0 ? (
-            <p className="text-sm text-gray-400">No incidents reported yet.</p>
+            <p className="vo-body-sm" style={{ color: 'var(--vo-text-muted)' }}>No incidents reported yet.</p>
           ) : (
-            <div className="space-y-2">
-              {history.map(h => {
-                const STATUS_STYLE: Record<string, { label: string; color: string; bg: string }> = {
-                  open:        { label: 'Open',        color: '#f59e0b', bg: '#fffbeb' },
-                  in_progress: { label: 'In Progress', color: '#3b82f6', bg: '#eff6ff' },
-                  resolved:    { label: 'Resolved',    color: '#22c55e', bg: '#f0fdf4' },
-                };
-                const stc = STATUS_STYLE[h.status] || { label: h.status, color: '#888', bg: '#f3f4f6' };
-                return (
-                  <div key={h.id} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{
-                        backgroundColor: SEVERITY_CONFIG[h.severity as keyof typeof SEVERITY_CONFIG]?.bg || '#f3f4f6',
-                        color: SEVERITY_CONFIG[h.severity as keyof typeof SEVERITY_CONFIG]?.color || '#555',
-                      }}>
-                        {h.severity.toUpperCase()}
-                      </span>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: stc.bg, color: stc.color }}>
-                        {stc.label}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {history.map(h => (
+                <div key={h.id} className="vo-row" style={{ cursor: 'default' }}>
+                  <div style={{ flex: 1 }}>
+                    <div className="flex items-center gap-2" style={{ marginBottom: '6px' }}>
+                      <span className={`vo-badge vo-badge--${h.severity}`}>{h.severity.toUpperCase()}</span>
+                      <span className={`vo-badge vo-badge--bare ${STATUS_BADGE[h.status] || ''}`}>
+                        {STATUS_LABEL[h.status] || h.status}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-700">{h.summary}</p>
+                    <p className="vo-body-sm">{h.summary}</p>
                     {h.resolution_note && (
-                      <p className="text-xs text-green-700 mt-1 bg-green-50 rounded-lg px-2 py-1">
-                        ✓ {h.resolution_note}
+                      <p className="vo-caption" style={{ color: 'var(--vo-status-done)', marginTop: '4px' }}>
+                        Resolution: {h.resolution_note}
                       </p>
                     )}
-                    <p className="text-xs text-gray-400 mt-1">{new Date(h.created_at).toLocaleString()}</p>
+                    <p className="vo-caption" style={{ marginTop: '4px' }}>
+                      {new Date(h.created_at).toLocaleString()}
+                    </p>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
         </div>
       )}
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 max-w-lg mx-auto w-full">
+      <main className="flex-1 flex flex-col items-center justify-center p-6"
+        style={{ maxWidth: '520px', margin: '0 auto', width: '100%' }}>
 
-        {/* IDLE STATE */}
+        {/* ── IDLE ── */}
         {phase === 'idle' && (
           <div className="w-full fade-in-up">
-            <h1 className="text-2xl font-bold text-gray-800 mb-1 text-center">Report an Incident</h1>
-            <p className="text-gray-500 mb-6 text-center text-sm">Describe what happened, the machine or area, and any safety concerns.</p>
+            <h1 className="vo-h2" style={{ textAlign: 'center', marginBottom: '6px' }}>Report an Incident</h1>
+            <p className="vo-body-sm" style={{ color: 'var(--vo-text-muted)', textAlign: 'center', marginBottom: '24px' }}>
+              Describe what happened, the machine or area, and any safety concerns.
+            </p>
 
-            {/* Shift & Machine selectors */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6 space-y-4 shadow-sm">
-
-              {/* Shift picker */}
-              <div>
-                <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Shift</p>
+            {/* Shift & Machine */}
+            <div className="vo-card vo-card--pad" style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <p className="vo-eyebrow" style={{ marginBottom: '10px' }}>Shift</p>
                 <div className="flex gap-2">
                   {(['Morning', 'Afternoon', 'Night'] as Shift[]).map(s => {
                     const cfg = SHIFT_CONFIG[s];
@@ -298,254 +307,271 @@ export default function OperatorPage() {
                       <button
                         key={s}
                         onClick={() => setShift(s)}
-                        className="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all"
+                        className="vo-btn flex-1"
                         style={{
-                          backgroundColor: active ? cfg.bg : 'white',
-                          borderColor: active ? cfg.border : '#e5e7eb',
-                          color: active ? cfg.color : '#9ca3af',
+                          height: '44px',
+                          background: active ? cfg.bg : 'var(--vo-surface)',
+                          color: active ? cfg.color : 'var(--vo-text-muted)',
+                          borderColor: active ? cfg.color : 'var(--vo-border-strong)',
+                          fontWeight: active ? 700 : 500,
                         }}
                       >
-                        {cfg.icon} {s}
+                        <svg className="vo-i vo-i-sm">
+                          <use href={`#vo-${cfg.iconId}`} />
+                        </svg>
+                        {s}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Machine input */}
-              <div>
-                <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Machine / Station <span className="font-normal normal-case text-gray-400">(optional)</span></p>
+              <div className="vo-field">
+                <label className="vo-label">
+                  Machine / Station{' '}
+                  <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--vo-text-muted)' }}>
+                    (optional)
+                  </span>
+                </label>
                 <input
                   type="text"
                   value={machine}
                   onChange={e => setMachine(e.target.value)}
                   placeholder="e.g. M-14, Conveyor Belt 3, Welding Bay A"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-sm"
+                  className="vo-input"
                 />
               </div>
             </div>
 
-            {/* Mode toggle pills */}
-            <div className="flex justify-center mb-8">
-              <div className="flex bg-gray-200 rounded-full p-1 gap-1">
+            {/* Mode Toggle */}
+            <div className="flex justify-center" style={{ marginBottom: '32px' }}>
+              <div className="vo-seg">
                 <button
+                  className="vo-seg__item"
+                  aria-selected={inputMode === 'voice' ? 'true' : 'false'}
                   onClick={() => switchMode('voice')}
-                  className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all"
-                  style={inputMode === 'voice'
-                    ? { backgroundColor: '#003057', color: 'white' }
-                    : { backgroundColor: 'transparent', color: '#555' }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-                  </svg>
+                  <svg className="vo-i vo-i-sm"><use href="#vo-mic" /></svg>
                   Voice
                 </button>
                 <button
+                  className="vo-seg__item"
+                  aria-selected={inputMode === 'text' ? 'true' : 'false'}
                   onClick={() => switchMode('text')}
-                  className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all"
-                  style={inputMode === 'text'
-                    ? { backgroundColor: '#003057', color: 'white' }
-                    : { backgroundColor: 'transparent', color: '#555' }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
-                  </svg>
+                  <svg className="vo-i vo-i-sm"><use href="#vo-pencil" /></svg>
                   Type
                 </button>
               </div>
             </div>
 
-            {/* VOICE MODE */}
+            {/* Voice mode */}
             {inputMode === 'voice' && (
-              <div className="text-center">
-                <button
-                  onClick={startRecording}
-                  className="w-52 h-52 rounded-full text-white font-bold text-xl shadow-2xl transition-all active:scale-95 hover:scale-105 flex flex-col items-center justify-center gap-3 mx-auto"
-                  style={{ backgroundColor: '#003057' }}
-                >
-                  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-                  </svg>
+              <div style={{ textAlign: 'center' }}>
+                <button onClick={startRecording} className="vo-mic" style={{ margin: '0 auto' }}>
+                  <svg className="vo-i vo-i-lg"><use href="#vo-mic" /></svg>
                   <span>TAP TO SPEAK</span>
                 </button>
-                <p className="mt-6 text-xs text-gray-400">Works best in Chrome or Edge. Microphone access required.</p>
+                <p className="vo-caption" style={{ marginTop: '24px' }}>
+                  Works best in Chrome or Edge. Microphone access required.
+                </p>
               </div>
             )}
 
-            {/* TEXT MODE */}
+            {/* Text mode */}
             {inputMode === 'text' && (
-              <form onSubmit={handleTextSubmit} className="space-y-4">
-                <textarea
-                  value={typedText}
-                  onChange={e => setTypedText(e.target.value)}
-                  placeholder="Describe the incident here... e.g. 'Machine 4 on assembly line A is making a loud grinding noise and has stopped moving. There is a burning smell coming from the motor area.'"
-                  rows={6}
-                  className="w-full px-4 py-4 rounded-2xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-base leading-relaxed resize-none shadow-sm"
-                  style={{ fontSize: '16px' }}
-                  autoFocus
-                />
-                <div className="flex items-center justify-between px-1">
-                  <span className={`text-xs font-medium ${typedText.trim().length < 10 ? 'text-gray-400' : 'text-green-600'}`}>
-                    {typedText.trim().length < 10
-                      ? `${10 - typedText.trim().length} more characters needed`
-                      : `${typedText.trim().length} characters — ready to submit`}
-                  </span>
+              <form onSubmit={handleTextSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="vo-field">
+                  <label className="vo-label">Incident Description</label>
+                  <textarea
+                    value={typedText}
+                    onChange={e => setTypedText(e.target.value)}
+                    placeholder="Describe the incident... e.g. 'Machine 4 on assembly line A is making a loud grinding noise and has stopped moving. There is a burning smell coming from the motor area.'"
+                    className="vo-textarea"
+                    style={{ minHeight: '140px', fontSize: '16px' }}
+                    autoFocus
+                  />
                 </div>
+                <p className="vo-caption" style={{
+                  color: typedText.trim().length < 10 ? 'var(--vo-text-muted)' : 'var(--vo-sev-low)',
+                  padding: '0 2px',
+                }}>
+                  {typedText.trim().length < 10
+                    ? `${10 - typedText.trim().length} more characters needed`
+                    : `${typedText.trim().length} characters — ready to submit`}
+                </p>
                 <button
                   type="submit"
                   disabled={typedText.trim().length < 10}
-                  className="w-full py-4 rounded-2xl font-bold text-white text-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
-                  style={{ backgroundColor: '#003057' }}
+                  className="vo-btn vo-btn--primary vo-btn--block vo-btn--lg"
                 >
+                  <svg className="vo-i"><use href="#vo-zap" /></svg>
                   Submit Incident
                 </button>
               </form>
             )}
 
             {error && (
-              <div className="mt-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                {error}
+              <div className="vo-banner" style={{ marginTop: '20px' }}>
+                <svg className="vo-i vo-i-sm" style={{ flexShrink: 0 }}><use href="#vo-alert-triangle" /></svg>
+                <span className="vo-body-sm">{error}</span>
               </div>
             )}
           </div>
         )}
 
-        {/* RECORDING STATE */}
+        {/* ── RECORDING ── */}
         {phase === 'recording' && (
-          <div className="text-center fade-in-up w-full">
-            <p className="text-gray-500 mb-6 text-lg">Listening... speak clearly.</p>
+          <div className="w-full fade-in-up" style={{ textAlign: 'center' }}>
+            <p className="vo-body-lg" style={{ color: 'var(--vo-text-2)', marginBottom: '24px' }}>
+              Listening... speak clearly.
+            </p>
 
-            <button
-              onClick={stopRecording}
-              className="recording-btn w-52 h-52 rounded-full text-white font-bold text-xl shadow-2xl transition-all active:scale-95 flex flex-col items-center justify-center gap-3 mx-auto"
-              style={{ backgroundColor: '#dc2626' }}
-            >
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="6" width="12" height="12" rx="2" />
-              </svg>
+            <button onClick={stopRecording} className="vo-mic vo-mic--rec" style={{ margin: '0 auto' }}>
+              <svg className="vo-i vo-i-lg"><use href="#vo-stop" /></svg>
               <span>TAP TO STOP</span>
             </button>
 
-            <div className="mt-6 text-gray-400 text-sm font-mono">
+            <div className="vo-mono" style={{ marginTop: '24px', color: 'var(--vo-text-muted)', fontSize: '20px' }}>
               {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
             </div>
 
             {transcript && (
-              <div className="mt-6 bg-white rounded-2xl p-4 border-2 border-blue-100 text-left shadow-sm">
-                <p className="text-xs text-gray-400 mb-1 font-medium">LIVE TRANSCRIPT</p>
-                <p className="text-gray-700 text-sm leading-relaxed">{transcript}</p>
+              <div className="vo-card vo-card--pad" style={{ marginTop: '24px', textAlign: 'left' }}>
+                <p className="vo-eyebrow" style={{ marginBottom: '8px' }}>Live Transcript</p>
+                <p className="vo-body-sm">{transcript}</p>
               </div>
             )}
           </div>
         )}
 
-        {/* PROCESSING STATE */}
+        {/* ── PROCESSING ── */}
         {phase === 'processing' && (
-          <div className="text-center fade-in-up">
-            <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 spin-slow" style={{ borderTop: '4px solid #003057', borderRight: '4px solid transparent', borderBottom: '4px solid #003057', borderLeft: '4px solid transparent', borderRadius: '50%' }}>
-            </div>
-            <h2 className="text-xl font-bold text-gray-700">Analyzing Incident...</h2>
-            <p className="text-gray-400 mt-2 text-sm">AI is checking knowledge base and generating response.</p>
+          <div className="fade-in-up" style={{ textAlign: 'center' }}>
+            <div className="spin-slow" style={{
+              width: '52px', height: '52px', margin: '0 auto 24px',
+              borderRadius: '50%',
+              border: '3px solid var(--vo-border)',
+              borderTopColor: 'var(--vo-accent)',
+            }} />
+            <h2 className="vo-h3">Analyzing Incident...</h2>
+            <p className="vo-body-sm" style={{ color: 'var(--vo-text-muted)', marginTop: '8px' }}>
+              AI is checking knowledge base and generating response.
+            </p>
             {transcript && (
-              <div className="mt-6 bg-white rounded-2xl p-4 border border-gray-200 text-left max-w-sm mx-auto space-y-2">
-                <div className="flex gap-3 text-xs">
-                  <span className="font-semibold text-gray-500">Shift:</span>
-                  <span className="text-gray-700">{SHIFT_CONFIG[shift].icon} {shift}</span>
-                  {machine && <><span className="font-semibold text-gray-500">Machine:</span><span className="text-gray-700">{machine}</span></>}
+              <div className="vo-card vo-card--pad" style={{ marginTop: '24px', textAlign: 'left', maxWidth: '380px', margin: '24px auto 0' }}>
+                <div className="flex gap-3 items-center" style={{ marginBottom: '10px' }}>
+                  <span className="vo-body-sm" style={{ color: 'var(--vo-text-muted)', fontWeight: 600 }}>Shift:</span>
+                  <span className="vo-body-sm flex items-center gap-1">
+                    <svg className="vo-i vo-i-sm"><use href={`#vo-${SHIFT_CONFIG[shift].iconId}`} /></svg>
+                    {shift}
+                  </span>
+                  {machine && (
+                    <>
+                      <span className="vo-body-sm" style={{ color: 'var(--vo-text-muted)', fontWeight: 600 }}>Machine:</span>
+                      <span className="vo-body-sm">{machine}</span>
+                    </>
+                  )}
                 </div>
-                <p className="text-xs text-gray-400 font-medium">YOUR REPORT</p>
-                <p className="text-gray-600 text-sm italic">&quot;{transcript}&quot;</p>
+                <p className="vo-eyebrow" style={{ marginBottom: '6px' }}>Your Report</p>
+                <p className="vo-body-sm" style={{ fontStyle: 'italic', color: 'var(--vo-text-2)' }}>&quot;{transcript}&quot;</p>
               </div>
             )}
           </div>
         )}
 
-        {/* RESULT STATE */}
+        {/* ── RESULT ── */}
         {phase === 'result' && result && severityConfig && (
-          <div className="w-full fade-in-up space-y-4">
+          <div className="w-full fade-in-up" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
             {/* Severity Banner */}
-            <div className="rounded-2xl p-4 border-2 flex items-center gap-4" style={{ backgroundColor: severityConfig.bg, borderColor: severityConfig.border }}>
-              <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: severityConfig.color }}>
-                <span className="text-white font-black text-xs">{severityConfig.label}</span>
-              </div>
-              <div>
-                <p className="font-bold text-gray-800 text-sm leading-snug">{result.analysis.summary}</p>
-                <p className="text-xs mt-1" style={{ color: severityConfig.color }}>
-                  Escalate to: <strong>{result.analysis.escalateTo}</strong>
-                </p>
+            <div className="vo-card vo-card--pad" style={{ borderLeftWidth: '4px', borderLeftColor: severityConfig.color }}>
+              <div className="flex items-center gap-4">
+                <span className={`vo-badge vo-badge--bare ${severityConfig.badgeClass}`}
+                  style={{ fontSize: '13px', padding: '6px 12px' }}>
+                  {severityConfig.label}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <p className="vo-body" style={{ fontWeight: 600 }}>{result.analysis.summary}</p>
+                  <p className="vo-caption" style={{ color: severityConfig.color, marginTop: '4px' }}>
+                    Escalate to: <strong>{result.analysis.escalateTo}</strong>
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Safety Warnings */}
             {result.analysis.safetyWarnings.length > 0 && (
-              <div className="rounded-2xl p-4 bg-red-50 border-2 border-red-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                    <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-bold text-red-700 text-sm">SAFETY WARNING</span>
+              <div className="vo-banner">
+                <svg className="vo-i" style={{ flexShrink: 0 }}><use href="#vo-alert-triangle" /></svg>
+                <div>
+                  <p className="vo-banner__title">Safety Warning</p>
+                  {result.analysis.safetyWarnings.map((w, i) => (
+                    <p key={i} className="vo-body-sm" style={{ marginTop: '4px' }}>{w}</p>
+                  ))}
                 </div>
-                {result.analysis.safetyWarnings.map((w, i) => (
-                  <p key={i} className="text-sm text-red-700 mt-1">{w}</p>
-                ))}
               </div>
             )}
 
             {/* Immediate Actions */}
-            <div className="rounded-2xl p-4 bg-white border border-gray-200 shadow-sm">
-              <h3 className="font-bold text-gray-700 text-sm mb-3 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">!</span>
-                IMMEDIATE ACTIONS
-              </h3>
-              <ol className="space-y-2">
-                {result.analysis.immediateActions.map((action, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-gray-700">
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold" style={{ backgroundColor: '#003057' }}>{i + 1}</span>
-                    <span className="leading-snug pt-0.5">{action}</span>
-                  </li>
-                ))}
-              </ol>
+            <div className="vo-card">
+              <div className="vo-card__head">
+                <p className="vo-eyebrow">Immediate Actions</p>
+              </div>
+              <div style={{ padding: '16px 18px' }}>
+                <ol style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {result.analysis.immediateActions.map((action, i) => (
+                    <li key={i} className="flex gap-3">
+                      <span className="vo-num" style={{ flexShrink: 0 }}>{i + 1}</span>
+                      <span className="vo-body-sm" style={{ paddingTop: '4px' }}>{action}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
 
             {/* Possible Causes */}
-            <div className="rounded-2xl p-4 bg-white border border-gray-200 shadow-sm">
-              <h3 className="font-bold text-gray-700 text-sm mb-3">POSSIBLE CAUSES</h3>
-              <ul className="space-y-1.5">
+            <div className="vo-card vo-card--pad">
+              <p className="vo-eyebrow" style={{ marginBottom: '12px' }}>Possible Causes</p>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {result.analysis.possibleCauses.map((cause, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-gray-600">
-                    <span className="text-orange-400 flex-shrink-0 mt-0.5">▸</span>
-                    {cause}
+                  <li key={i} className="flex gap-2 items-start">
+                    <svg className="vo-i vo-i-sm" style={{ color: 'var(--vo-accent)', flexShrink: 0, marginTop: '1px' }}>
+                      <use href="#vo-chevron-right" />
+                    </svg>
+                    <span className="vo-body-sm">{cause}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* Transcript */}
-            <div className="rounded-2xl p-4 bg-gray-50 border border-gray-200 space-y-2">
-              <div className="flex flex-wrap gap-3 text-xs">
-                <span className="px-2 py-1 rounded-full font-medium" style={{ backgroundColor: SHIFT_CONFIG[shift].bg, color: SHIFT_CONFIG[shift].color }}>
-                  {SHIFT_CONFIG[shift].icon} {shift} Shift
+            <div className="vo-card vo-card--pad" style={{ background: 'var(--vo-surface-2)' }}>
+              <div className="flex flex-wrap gap-2" style={{ marginBottom: '10px' }}>
+                <span className="vo-badge vo-badge--bare" style={{
+                  color: SHIFT_CONFIG[shift].color,
+                  background: SHIFT_CONFIG[shift].bg,
+                }}>
+                  <svg className="vo-i vo-i-sm"><use href={`#vo-${SHIFT_CONFIG[shift].iconId}`} /></svg>
+                  {shift} Shift
                 </span>
                 {machine && (
-                  <span className="px-2 py-1 rounded-full bg-gray-200 text-gray-600 font-medium">
-                    🔧 {machine}
+                  <span className="vo-badge vo-badge--bare" style={{ color: 'var(--vo-text-2)', background: 'var(--vo-surface-3)' }}>
+                    <svg className="vo-i vo-i-sm"><use href="#vo-wrench" /></svg>
+                    {machine}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 font-medium">YOUR REPORT (ID: #{result.id})</p>
-              <p className="text-sm text-gray-500 italic">&quot;{result.transcript}&quot;</p>
+              <p className="vo-eyebrow" style={{ marginBottom: '6px' }}>Your Report (ID: #{result.id})</p>
+              <p className="vo-body-sm" style={{ fontStyle: 'italic', color: 'var(--vo-text-2)' }}>
+                &quot;{result.transcript}&quot;
+              </p>
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={reset}
-                className="flex-1 py-4 rounded-2xl font-bold text-white text-base transition-all active:scale-95"
-                style={{ backgroundColor: '#003057' }}
-              >
-                Report Another
-              </button>
-            </div>
+            <button onClick={reset} className="vo-btn vo-btn--primary vo-btn--block vo-btn--lg">
+              <svg className="vo-i"><use href="#vo-plus" /></svg>
+              Report Another
+            </button>
           </div>
         )}
       </main>
